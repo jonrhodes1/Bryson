@@ -762,7 +762,7 @@ function importCI(f){const r=new FileReader();r.onload=()=>{try{let obj={};const
 
 // ---------- wiring ----------
 function boot(){
-  $("#asof").textContent=D.sync&&D.sync.time?"Synced "+fmtAgo(D.sync.time):"Data to "+fmtDate(D.range[1]);$("#gear").onclick=openSettings;
+  $("#asof").textContent=D.sync&&D.sync.time?"Synced "+fmtAgo(D.sync.time):"Data to "+fmtDate(D.range[1]);$("#gear").onclick=openSettings;if(ATH.name){$(".brand span").textContent="/ "+ATH.name.split(" ")[0];document.title=ATH.name.split(" ")[0]+" · Performance Lab"}
   $("#foot").innerHTML=`<p><b style="color:var(--ink)">Method.</b> Load = TrainingPeaks TSS where TrainingPeaks has one; otherwise Banister TRIMP normalised so 1 h at LTHR = 100 (*estimated from duration where there is no HR). Fitness/fatigue = 42/7-day exponentially weighted load; form = yesterday's fitness minus fatigue. Grade-adjusted pace uses the Minetti (2002) energy-cost polynomial. Readiness weighting (form 30%, load ratio 15%, monotony 10%, recent load 10%, HRV 15%, resting HR 5%, sleep 5%, check-in 10%; renormalised over the signals present) is provisional and will be recalibrated against your logged outcomes. Data: ${D.acts.length} sessions, ${fmtDate(D.range[0])} to ${fmtDate(D.range[1])}.</p>`;
   $$("nav.tabs button").forEach(b=>b.onclick=()=>{$$("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));$$("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+b.dataset.v));store.set("pl.tab",b.dataset.v);redraw()});
   $$("#pmc-range button").forEach(b=>b.onclick=()=>{pmcRange=+b.dataset.r;$$("#pmc-range button").forEach(x=>x.classList.toggle("on",x===b));groups.pmc=[];drawPMC();drawRecovery()});

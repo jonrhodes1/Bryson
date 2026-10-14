@@ -45,7 +45,7 @@ jobs:
         env:
           TP_AUTH_COOKIE: ${{ secrets.TP_AUTH_COOKIE }}
           DASH_PASSPHRASE: ${{ secrets.DASH_PASSPHRASE }}
-          TP_ATHLETE: ${{ vars.TP_ATHLETE }}
+          TP_ATHLETE: ${{ vars.TP_ATHLETE || 'Bryson Kay' }}
           TP_START: ${{ vars.TP_START }}
         run: python sync/run.py --out _site
 

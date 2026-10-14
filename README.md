@@ -38,12 +38,12 @@ The sync only reads from TrainingPeaks; it never writes to it. It uses
 
    Treat it like a password: paste it only into GitHub Secrets.
 4. **Optional variables** (*Secrets and variables → Actions → Variables*):
-   - `TP_ATHLETE`: on a coach account, the athlete's name or ID to sync.
+   - `TP_ATHLETE`: the athlete to sync on a coach account. It defaults to `Bryson Kay`; use the athlete ID if the name is ambiguous.
    - `TP_START`: the first date to pull, e.g. `2024-01-01`. The default is two years back.
 5. **First run:** go to *Actions → Sync → Run workflow*. The first run back-fills your history and takes 10 to 20 minutes. After that it runs nightly at 04:15 UTC, and also whenever you save a check-in.
-6. **Open** `https://<your-username>.github.io/performance-lab/` and unlock it with your passphrase.
+6. **Open** `https://jonrhodes1.github.io/Bryson/` and unlock it with your passphrase.
 7. **Connect check-ins:** create a [fine-grained token](https://github.com/settings/personal-access-tokens/new):
-   - Repository access: *Only select repositories → performance-lab*
+   - Repository access: *Only select repositories → Bryson*
    - Permissions: *Contents → Read and write*, and nothing else
    - Expiry: 1 year
 

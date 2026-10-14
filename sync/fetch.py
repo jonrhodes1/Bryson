@@ -69,7 +69,10 @@ async def fetch(cache: Path, start: dt.date, today: dt.date, ahead_days: int = 1
         athlete_override.set(athlete)
 
     async with TPClient() as client:
-        aid = await client.ensure_athlete_id()
+        try:
+            aid = await client.ensure_athlete_id()
+        except ValueError as e:  # ambiguous athlete name on a coach account
+            raise SyncAuthError(f"{e} Set the TP_ATHLETE repository variable to the athlete ID instead.")
         if not aid:
             raise SyncAuthError("Could not resolve the TrainingPeaks athlete. The cookie may be missing or expired, "
                                 "or TP_ATHLETE does not match an athlete on this account.")
