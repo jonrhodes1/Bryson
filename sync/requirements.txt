@@ -1,0 +1,7 @@
+# TrainingPeaks client, pinned to an audited commit (the cookie it handles grants full account access)
+tp-mcp @ git+https://github.com/JamsusMaximus/trainingpeaks-mcp.git@a412a84eb4f9c8f03e108a1f27beb053d83a207d
+fitdecode==0.11.0
+numpy>=1.26,<3
+pandas>=2.2,<4
+scipy>=1.12,<2
+cryptography>=42

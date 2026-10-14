@@ -1,0 +1,796 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Performance Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;800;900&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f3f3f1;--surface:#ffffff;--surface-2:#f8f8f6;--ink:#0b0b0b;--ink-2:#52514e;--muted:#8a8984;--line:#e4e3df;--line-2:#d3d2cd;
+  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s7:#6250d6;
+  --z1:#86b6ef;--z2:#5598e7;--z3:#2a78d6;--z4:#1c5cab;--z5:#104281;
+  --good:#0ca30c;--warn:#fab219;--serious:#ec835a;--crit:#d03b3b;
+  --band:rgba(11,11,11,.035);--band-2:rgba(11,11,11,.07);
+  --hero:#0b0b0b;--hero-ink:#ffffff;
+  --sans:"Inter",system-ui,-apple-system,sans-serif;--display:"Inter Tight","Inter",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0f0f0e;--surface:#1a1a19;--surface-2:#151514;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#8f8e87;--line:#2c2c29;--line-2:#3a3a36;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s7:#9085e9;
+  --z1:#9ec5f4;--z2:#6da7ec;--z3:#3987e5;--z4:#256abf;--z5:#184f95;
+  --band:rgba(255,255,255,.035);--band-2:rgba(255,255,255,.07);
+  --hero:#f0efec;--hero-ink:#0b0b0b;
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0f0f0e;--surface:#1a1a19;--surface-2:#151514;--ink:#f0efec;--ink-2:#c3c2b7;--muted:#8f8e87;--line:#2c2c29;--line-2:#3a3a36;
+  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s7:#9085e9;
+  --z1:#9ec5f4;--z2:#6da7ec;--z3:#3987e5;--z4:#256abf;--z5:#184f95;
+  --band:rgba(255,255,255,.035);--band-2:rgba(255,255,255,.07);
+  --hero:#f0efec;--hero-ink:#0b0b0b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+a{color:inherit}
+button{font:inherit;color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 24px}
+header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.topbar{display:flex;align-items:center;gap:20px;height:60px}
+.brand{font-family:var(--display);font-weight:900;font-size:17px;letter-spacing:-.02em;text-transform:uppercase;white-space:nowrap}
+.brand span{color:var(--muted);font-weight:600}
+nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+nav.tabs button{background:none;border:0;padding:8px 14px;border-radius:999px;font-weight:600;font-size:13px;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+nav.tabs button:hover:not([aria-selected="true"]){background:var(--band-2)}
+.iconbtn{background:none;border:1px solid var(--line-2);border-radius:999px;width:34px;height:34px;display:grid;place-items:center;cursor:pointer;flex:none}
+.asof{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+main{padding:28px 0 80px}
+section.view{display:none}section.view.on{display:block}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;margin:0}
+h2{font-size:22px;font-weight:800}
+h3{font-size:15px;font-weight:700;letter-spacing:-.01em}
+.grid{display:grid;gap:16px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card .hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.card .sub{color:var(--muted);font-size:12.5px}
+.sec{margin-top:36px}.sec>.hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+/* hero */
+.hero{background:var(--hero);color:var(--hero-ink);border-radius:20px;padding:32px;display:grid;grid-template-columns:auto 1fr;gap:40px;align-items:end;position:relative;overflow:hidden}
+.hero .big{font-family:var(--display);font-weight:900;font-size:clamp(96px,14vw,168px);line-height:.82;letter-spacing:-.05em}
+.hero .lab{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.6}
+.hero .state{display:inline-flex;align-items:center;gap:8px;font-family:var(--display);font-weight:800;font-size:28px;text-transform:uppercase;letter-spacing:-.01em;margin-top:14px}
+.hero .dot{width:12px;height:12px;border-radius:50%}
+.hero .call{font-size:16px;line-height:1.55;max-width:60ch;opacity:.92}
+.hero .call b{font-weight:600}
+.hero .meta{display:flex;gap:28px;margin-top:22px;flex-wrap:wrap}
+.hero .meta div{font-family:var(--mono);font-size:12px;opacity:.75}
+.hero .meta b{display:block;font-family:var(--display);font-size:24px;font-weight:800;opacity:1;letter-spacing:-.02em}
+/* tiles */
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.tile .v{font-family:var(--display);font-weight:800;font-size:34px;letter-spacing:-.03em;line-height:1}
+.tile .v small{font-size:14px;font-weight:600;color:var(--muted);margin-left:4px;letter-spacing:0}
+.tile .d{font-size:12.5px;color:var(--ink-2)}
+.meter{height:4px;border-radius:2px;background:var(--band-2);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;background:var(--ink);border-radius:2px}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--band-2);white-space:nowrap}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--muted))}
+/* segmented */
+.seg{display:inline-flex;background:var(--band-2);border-radius:999px;padding:3px}
+.seg button{border:0;background:none;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+/* chart */
+.chart{position:relative;width:100%}
+.chart svg{display:block;width:100%;overflow:visible}
+.chart text{font-family:var(--mono);font-size:10.5px;fill:var(--muted)}
+.chart .grid line{stroke:var(--line);stroke-width:1}
+.chart .axis line{stroke:var(--line-2)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px;font-size:12px;box-shadow:0 6px 24px rgba(0,0,0,.12);white-space:nowrap;z-index:5;display:none}
+.tip .t{font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:4px}
+.tip .r{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tip .r span:first-child{display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+.tip .r b{font-family:var(--mono);font-weight:500}
+.tip i{width:10px;height:3px;border-radius:2px;display:inline-block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.legend i.sq{width:10px;height:10px;border-radius:3px}
+/* tables */
+table.t{width:100%;border-collapse:collapse;font-size:13px}
+table.t th{font-family:var(--mono);font-weight:500;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+table.t td{padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td.n,table.t th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.t tr.click{cursor:pointer}table.t tr.click:hover td{background:var(--band)}
+.tscroll{overflow-x:auto}
+/* activities */
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;color:var(--ink-2)}
+.chip.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip .c{font-family:var(--mono);font-weight:400;opacity:.65;margin-left:4px}
+.sport{display:inline-flex;align-items:center;gap:8px;font-weight:600}
+.sport i{width:8px;height:8px;border-radius:2px;background:var(--ink)}
+.racetag{font-family:var(--mono);font-size:10px;letter-spacing:.06em;padding:2px 6px;border-radius:4px;background:var(--ink);color:var(--bg);margin-left:6px}
+/* drawer */
+.drawer{position:fixed;inset:0;z-index:40;display:none}
+.drawer.on{display:block}
+.drawer .scrim{position:absolute;inset:0;background:rgba(0,0,0,.35)}
+.drawer .panel{position:absolute;top:0;right:0;bottom:0;width:min(880px,100%);background:var(--bg);overflow-y:auto;padding:28px;box-shadow:-20px 0 60px rgba(0,0,0,.2)}
+.drawer .close{position:sticky;top:0;float:right}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.kv div{background:var(--surface);padding:12px 14px}
+.kv dt{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.kv dd{margin:4px 0 0;font-family:var(--display);font-weight:800;font-size:22px;letter-spacing:-.02em}
+.kv dd small{font-size:12px;color:var(--muted);font-weight:600;margin-left:3px}
+.zbar{display:flex;height:28px;gap:2px;border-radius:6px;overflow:hidden}
+.zbar i{display:block;height:100%}
+.note{font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.note b{color:var(--ink)}
+.callout{border-left:3px solid var(--ink);padding:10px 14px;background:var(--surface-2);border-radius:0 10px 10px 0;font-size:13px;color:var(--ink-2)}
+.callout b{color:var(--ink)}
+/* forms */
+label.f{display:flex;flex-direction:column;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+input[type=range]{width:100%;accent-color:var(--ink)}
+input[type=date],input[type=number],input[type=text],input[type=password],select,textarea{font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:10px;padding:8px 10px}
+textarea{resize:vertical;min-height:64px}
+.btn{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:10px 18px;font-weight:700;cursor:pointer}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line-2)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.ci-row{display:grid;grid-template-columns:150px 1fr 40px;gap:14px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+.ci-row .val{font-family:var(--display);font-weight:800;font-size:20px;text-align:right}
+.ci-row .nm{font-weight:600}.ci-row .nm small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.gate{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;place-items:center;padding:24px}
+.gate .box{width:min(420px,100%)}
+.gate h1{font-family:var(--display);font-weight:900;font-size:44px;letter-spacing:-.04em;line-height:.95;text-transform:uppercase;margin:10px 0 24px}
+.gate input[type=password]{width:100%;font-size:16px;padding:14px 16px;border-radius:12px}
+.gate .row{display:flex;align-items:center;gap:8px;margin:14px 0 18px;font-size:13px;color:var(--ink-2)}
+.gate .err{color:var(--crit);font-size:13px;min-height:20px;margin-top:10px}
+.banner{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line-2);background:var(--surface);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:var(--ink-2)}
+.banner b{color:var(--ink)}
+.syncpill{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.syncpill i{width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted))}
+.evchips{display:flex;gap:6px;flex-wrap:wrap}
+.set-sec{border-top:1px solid var(--line);padding-top:18px;margin-top:18px}
+.set-sec input[type=text],.set-sec input[type=password]{width:100%}
+code{font-family:var(--mono);font-size:12px;background:var(--band-2);padding:1px 5px;border-radius:4px}
+footer{color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding:24px 0 40px}
+@media (max-width:900px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3,.g2{grid-template-columns:1fr}.hero{grid-template-columns:1fr;gap:20px;padding:24px}.asof{display:none}}
+@media (max-width:560px){#t-kv{grid-template-columns:1fr 1fr!important}.wrap{padding:0 16px}.g4{grid-template-columns:1fr 1fr}.drawer .panel{padding:18px}.ci-row{grid-template-columns:1fr 36px}.ci-row input{grid-column:1/-1}.tile .v{font-size:28px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap topbar">
+  <div class="brand">Performance Lab <span>/ live</span></div>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-v="today" aria-selected="true">Readiness</button>
+    <button role="tab" data-v="acts">Activities</button>
+    <button role="tab" data-v="phys">Physiology</button>
+    <button role="tab" data-v="peak">Peaking &amp; Taper</button>
+    <button role="tab" data-v="check">Check-in</button>
+  </nav>
+  <div class="asof" id="asof"></div>
+  <button class="iconbtn" id="gear" title="Settings and sync" aria-label="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  <button class="iconbtn" id="theme" title="Toggle theme" aria-label="Toggle theme"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg></button>
+</div></header>
+
+<main class="wrap">
+<!-- ============ READINESS ============ -->
+<section class="view on" id="v-today">
+  <div id="banners"></div>
+  <div class="hero">
+    <div>
+      <div class="lab">Readiness index</div>
+      <div class="big num" id="r-score" style="font-family:var(--display)">--</div>
+      <div class="state"><span class="dot" id="r-dot"></span><span id="r-state">--</span></div>
+    </div>
+    <div>
+      <div class="lab" id="r-date">--</div>
+      <p class="call" id="r-call"></p>
+      <div class="meta" id="r-meta"></div>
+    </div>
+  </div>
+
+  <div class="grid g4 sec" id="r-tiles" style="margin-top:16px"></div>
+  <div class="grid g4" id="w-tiles" style="margin-top:16px"></div>
+  <div class="grid g2 sec" id="rec-cards">
+    <div class="card"><div class="hd"><div><h3>HRV · overnight rMSSD</h3><div class="sub">7-day rolling mean against your 60-day normal range (±0.5 SD)</div></div><div class="legend"><span><i class="sq" style="background:var(--s1);border-radius:50%"></i>Daily</span><span><i style="background:var(--ink)"></i>7-day</span><span><i class="sq" style="background:var(--band-2)"></i>Normal range</span></div></div><div class="chart" id="c-hrv"></div></div>
+    <div class="card"><div class="hd"><div><h3>Resting heart rate</h3><div class="sub">Daily value against your 30-day mean</div></div><div class="legend"><span><i class="sq" style="background:var(--s2);border-radius:50%"></i>Daily</span><span><i style="background:var(--ink)"></i>30-day mean</span></div></div><div class="chart" id="c-rhr"></div></div>
+  </div>
+
+  <div class="sec">
+    <div class="hd"><div><div class="eyebrow">Performance management</div><h2>Fitness, fatigue and form</h2></div>
+      <div class="seg" id="pmc-range"><button data-r="90">90D</button><button data-r="182" class="on">6M</button><button data-r="0">All</button></div></div>
+    <div class="card">
+      <div class="hd"><h3>Fitness (CTL) vs fatigue (ATL)</h3><div class="legend"><span><i style="background:var(--s1)"></i>Fitness · 42-day</span><span><i style="background:var(--s2)"></i>Fatigue · 7-day</span><span><i class="sq" style="background:var(--line-2)"></i>Daily load</span></div></div>
+      <div class="chart" id="c-pmc"></div>
+    </div>
+    <div class="grid g2" style="margin-top:16px">
+      <div class="card"><div class="hd"><h3>Form (TSB)</h3><span class="sub">Fitness minus fatigue, bands shaded</span></div><div class="chart" id="c-tsb"></div></div>
+      <div class="card"><div class="hd"><h3>Readiness index, daily</h3><span class="sub">Composite of load and recovery signals</span></div><div class="chart" id="c-ready"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ACTIVITIES ============ -->
+<section class="view" id="v-acts">
+  <div class="hd sec" style="margin-top:0;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:12px">
+    <div><div class="eyebrow" id="a-count"></div><h2>Every session</h2></div>
+    <select id="a-month" aria-label="Month"></select>
+  </div>
+  <div class="filters" id="a-filters"></div>
+  <div class="card" style="padding:6px 8px"><div class="tscroll"><table class="t" id="a-table"></table></div></div>
+  <div style="text-align:center;margin-top:16px"><button class="btn ghost" id="a-more">Show more</button></div>
+</section>
+
+<!-- ============ PHYSIOLOGY ============ -->
+<section class="view" id="v-phys">
+  <div><div class="eyebrow">Physiological profile</div><h2>Anchors, efficiency and intensity</h2></div>
+  <div class="grid g4" id="p-anchors" style="margin-top:16px"></div>
+  <div class="card" style="margin-top:16px">
+    <div class="hd"><h3>Heart-rate zones</h3><span class="sub">Five-zone model anchored to estimated LTHR</span></div>
+    <div class="tscroll"><table class="t" id="p-zones"></table></div>
+  </div>
+  <div class="sec">
+    <div class="card">
+      <div class="hd"><div><h3>Aerobic efficiency (EF)</h3><div class="sub">Grade-adjusted speed per heartbeat on steady aerobic runs. Higher is fitter.</div></div><div class="legend"><span><i class="sq" style="background:var(--s1);border-radius:50%"></i>Session</span><span><i style="background:var(--ink)"></i>28-day rolling mean</span></div></div>
+      <div class="chart" id="c-ef"></div>
+    </div>
+  </div>
+  <div class="grid g2 sec">
+    <div class="card"><div class="hd"><h3>Weekly intensity distribution</h3><span class="sub">Hours per HR zone</span></div><div class="legend" id="z-legend" style="margin-bottom:10px"></div><div class="chart" id="c-zones"></div></div>
+    <div class="card"><div class="hd"><h3>Weekly volume</h3><div class="seg" id="vol-m"><button data-m="hrs" class="on">Hours</button><button data-m="km">Run km</button><button data-m="asc">Ascent</button></div></div><div class="chart" id="c-vol"></div></div>
+  </div>
+  <div class="grid g2 sec">
+    <div class="card"><div class="hd"><h3>Aerobic decoupling</h3><span class="sub">Efficiency drift, first vs second half of steady runs ≥40 min</span></div><div class="chart" id="c-dec"></div><p class="note" style="margin-top:10px">Under 5% is generally read as good aerobic durability. Trail terrain inflates scatter, so watch the trend rather than single sessions.</p></div>
+    <div class="card"><div class="hd"><h3>Signal audit · RR intervals</h3><span class="status" id="p-audit-st" style="--c:var(--muted)">–</span></div><div id="p-audit"></div></div>
+  </div>
+</section>
+
+<!-- ============ PEAKING ============ -->
+<section class="view" id="v-peak">
+  <div><div class="eyebrow">Peaking and taper</div><h2>Arrive fresh, keep the fitness</h2></div>
+
+  <div class="grid g2" style="margin-top:16px;grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)">
+    <div class="card">
+      <div class="hd"><h3>Taper simulator</h3><span class="sub" id="t-from"></span></div>
+      <div class="grid" style="gap:14px">
+        <label class="f">Race date<input type="date" id="t-date"></label>
+        <div class="evchips" id="t-events"></div>
+        <label class="f" style="flex-direction:row;align-items:center;gap:8px;font-weight:500"><input type="checkbox" id="t-planned" checked> Use my planned TrainingPeaks sessions where they exist</label>
+        <label class="f"><span>Taper length · <span class="num" id="t-len-v"></span> days</span><input type="range" id="t-len" min="5" max="21" value="12"></label>
+        <label class="f"><span>Mean load reduction · <span class="num" id="t-red-v"></span>%</span><input type="range" id="t-red" min="10" max="75" value="50"></label>
+        <label class="f">Shape<div class="seg" id="t-shape"><button data-s="step">Step</button><button data-s="linear">Linear</button><button data-s="exp" class="on">Exponential</button></div></label>
+        <label class="f"><span>Pre-taper load · <span class="num" id="t-build-v"></span>% of recent 4 weeks</span><input type="range" id="t-build" min="80" max="130" value="105"></label>
+        <label class="f">Target race-day form (TSB as % of CTL)<div style="display:flex;gap:8px;align-items:center"><input type="number" id="t-lo" value="10" style="width:80px"> to <input type="number" id="t-hi" value="30" style="width:80px"></div></label>
+        <button class="btn" id="t-opt">Find best taper for this target</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="hd"><h3>Projected race-day state</h3><div class="legend"><span><i style="background:var(--s1)"></i>Fitness</span><span><i style="background:var(--s2)"></i>Fatigue</span><span><i style="background:var(--ink)"></i>Form</span></div></div>
+      <div class="kv" id="t-kv" style="grid-template-columns:repeat(4,minmax(0,1fr))"></div>
+      <div class="chart" id="c-taper" style="margin-top:14px"></div>
+      <div id="t-check" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="hd"><div><h3>Your maximal efforts and the state you arrived in</h3><div class="sub">Auto-detected (≥3 km at ≥97% LTHR) plus any you tag as races in Activities</div></div></div>
+    <div class="grid g2" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
+      <div class="card" style="padding:6px 8px"><div class="tscroll"><table class="t" id="race-table"></table></div></div>
+      <div class="card"><div class="hd"><h3>Form on the day vs performance</h3></div><div class="chart" id="c-race"></div></div>
+    </div>
+  </div>
+
+  <div class="card sec" id="m-card"></div>
+</section>
+
+<!-- ============ CHECK-IN ============ -->
+<section class="view" id="v-check">
+  <div><div class="eyebrow">Daily check-in · 60 seconds</div><h2>How are you, really?</h2></div>
+  <div class="grid g2" style="margin-top:16px;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)">
+    <div class="card">
+      <div class="hd"><label class="f" style="flex-direction:row;align-items:center;gap:10px">Date <input type="date" id="ci-date"></label><span class="sub">1 = worst · 7 = best</span></div>
+      <div id="ci-rows"></div>
+      <div class="grid g3" style="margin-top:14px">
+        <label class="f">Sleep (h)<input type="number" step="0.25" id="ci-sleep" placeholder="7.5"></label>
+        <label class="f">Morning rMSSD (ms)<input type="number" id="ci-hrv" placeholder="optional"></label>
+        <label class="f">Resting HR<input type="number" id="ci-rhr" placeholder="optional"></label>
+      </div>
+      <label class="f" style="margin-top:14px">One line: what's on your mind?<textarea id="ci-note" placeholder="Work deadline, slept badly, legs feel springy..."></textarea></label>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap"><button class="btn" id="ci-save">Save check-in</button><button class="btn ghost" id="ci-export">Export CSV</button><label class="btn ghost" style="cursor:pointer">Import<input type="file" id="ci-import" accept=".json,.csv" hidden></label></div>
+      <p class="note" id="ci-msg" style="margin-top:10px"></p>
+    </div>
+    <div>
+      <div class="grid g2" id="ci-tiles"></div>
+      <div class="card" style="margin-top:16px"><div class="hd"><h3>Wellbeing trend</h3><div class="legend"><span><i style="background:var(--s1)"></i>Wellbeing (0-100)</span><span><i style="background:var(--s7)"></i>Motivation + confidence</span></div></div><div class="chart" id="c-ci"></div></div>
+      <div class="callout" style="margin-top:16px">Check-ins are encrypted in this browser before they leave it, then saved to your repository. The nightly build folds them into readiness and, over time, tests which feelings actually predict your performance.</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer><div class="wrap" id="foot"></div></footer>
+
+<div class="gate" id="gate"><form class="box" id="gate-form" autocomplete="on">
+  <div class="eyebrow">Private · encrypted</div>
+  <h1>Performance<br>Lab</h1>
+  <input type="text" name="username" value="performance-lab" autocomplete="username" hidden>
+  <input type="password" id="gate-pw" placeholder="Passphrase" autocomplete="current-password" required>
+  <label class="row"><input type="checkbox" id="gate-remember"> Remember on this device</label>
+  <button class="btn" style="width:100%;padding:14px" id="gate-btn" type="submit">Unlock</button>
+  <div class="err" id="gate-err"></div>
+  <p class="note" style="margin-top:20px">Your data are decrypted in this browser. The server only ever holds ciphertext.</p>
+</form></div>
+<div class="drawer" id="drawer"><div class="scrim"></div><div class="panel" id="dpanel"></div></div>
+
+<script>
+"use strict";
+// ================= crypto + storage layer (WebCrypto; mirrors sync/crypto.py) =================
+const PL={key:null,state:{checkins:{},races:{},settings:{}},sync:"",dirty:false};
+const b64=u=>{u=new Uint8Array(u);let s="";for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(pw,cfg){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt:unb64(cfg.salt),iterations:cfg.iter,hash:"SHA-256"},base,{name:"AES-GCM",length:256},true,["encrypt","decrypt"])}
+const gunzip=async buf=>new Response(new Blob([buf]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+const gzipS=async str=>new Uint8Array(await new Response(new Blob([str]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer());
+async function decEnv(txt,key){const e=JSON.parse(txt);const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:unb64(e.iv)},key,unb64(e.ct));return JSON.parse(await gunzip(pt))}
+async function encEnv(obj,key){const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},key,await gzipS(JSON.stringify(obj)));return JSON.stringify({v:1,iv:b64(iv),ct:b64(ct)})}
+const LS={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const SS={get(k){try{return sessionStorage.getItem(k)}catch(e){return null}},set(k,v){try{sessionStorage.setItem(k,v)}catch(e){}},del(k){try{sessionStorage.removeItem(k)}catch(e){}}};
+// ---- GitHub write-back for check-ins and race tags (state.enc)
+function repoInfo(){try{const o=JSON.parse(LS.get("pl.repo")||"null");if(o&&o.owner&&o.repo)return o}catch(e){}
+  const h=location.hostname;if(h.endsWith(".github.io")){const seg=location.pathname.split("/").filter(Boolean)[0];return{owner:h.split(".")[0],repo:seg||h}}return null}
+async function getToken(){const t=LS.get("pl.gh");if(!t||!PL.key)return null;try{return(await decEnv(t,PL.key)).t}catch(e){return null}}
+async function ghGet(){const R=repoInfo();if(!R)return null;const tok=await getToken();const h={Accept:"application/vnd.github+json"};if(tok)h.Authorization="Bearer "+tok;
+  const r=await fetch(`https://api.github.com/repos/${R.owner}/${R.repo}/contents/state.enc?t=${Date.now()}`,{headers:h,cache:"no-store"});
+  if(r.status===404)return{sha:null,text:null};if(!r.ok)throw new Error("GitHub read "+r.status);const j=await r.json();return{sha:j.sha,text:atob(j.content.replace(/\n/g,""))}}
+async function ghPut(text,sha){const R=repoInfo(),tok=await getToken();if(!R||!tok)throw new Error("not connected");
+  const r=await fetch(`https://api.github.com/repos/${R.owner}/${R.repo}/contents/state.enc`,{method:"PUT",headers:{Accept:"application/vnd.github+json",Authorization:"Bearer "+tok},
+    body:JSON.stringify({message:"Update check-ins",content:btoa(text),...(sha?{sha}:{})})});if(!r.ok)throw new Error("GitHub write "+r.status);return r.json()}
+function mergeState(a,b){a=a||{};b=b||{};const out={checkins:{...(a.checkins||{})},races:{...(a.races||{})},settings:{...(a.settings||{}),...(b.settings||{})}};
+  for(const[d,c]of Object.entries(b.checkins||{}))if(!out.checkins[d]||(c.ts||0)>=(out.checkins[d].ts||0))out.checkins[d]=c;
+  for(const[id,v]of Object.entries(b.races||{})){const o=out.races[id];if(!o||((v&&v.ts)||0)>=((o&&o.ts)||0))out.races[id]=v}
+  if((b.settings_ts||0)<(a.settings_ts||0))out.settings=a.settings||{};out.settings_ts=Math.max(a.settings_ts||0,b.settings_ts||0);return out}
+async function saveLocal(){if(PL.key)LS.set("pl.state",await encEnv({state:PL.state,dirty:PL.dirty},PL.key))}
+async function loadState(){let local=null;try{const t=LS.get("pl.state");if(t){const o=await decEnv(t,PL.key);local=o.state;PL.dirty=!!o.dirty}}catch(e){}
+  let remote=null;try{const g=await ghGet();if(g&&g.text)remote=await decEnv(g.text,PL.key)}catch(e){PL.sync="offline"}
+  if(!remote){try{const r=await fetch("state.enc",{cache:"no-store"});if(r.ok)remote=await decEnv(await r.text(),PL.key)}catch(e){}}
+  PL.state=mergeState(remote||{},local||{});await saveLocal();if(PL.dirty)pushState().catch(()=>{})}
+async function pushState(){PL.dirty=true;await saveLocal();
+  if(!(await getToken())){PL.sync="local";return "local"}
+  const g=await ghGet();let remote={};if(g&&g.text){try{remote=await decEnv(g.text,PL.key)}catch(e){}}
+  PL.state=mergeState(remote,PL.state);await ghPut(await encEnv(PL.state,PL.key),g?g.sha:null);PL.dirty=false;PL.sync="synced";await saveLocal();return "synced"}
+// ---- unlock
+async function openWith(key){const r=await fetch("data.enc",{cache:"no-store"});if(!r.ok)throw new Error("data.enc not found ("+r.status+")");
+  const D=await decEnv(await r.text(),key);PL.key=key;await loadState();document.getElementById("gate").style.display="none";start(D)}
+async function tryStored(){const raw=LS.get("pl.k")||SS.get("pl.k");if(!raw)return false;
+  try{const key=await crypto.subtle.importKey("raw",unb64(raw),{name:"AES-GCM"},true,["encrypt","decrypt"]);await openWith(key);return true}catch(e){LS.del("pl.k");SS.del("pl.k");return false}}
+document.getElementById("gate-form").addEventListener("submit",async e=>{e.preventDefault();const btn=document.getElementById("gate-btn"),err=document.getElementById("gate-err");
+  btn.disabled=true;btn.textContent="Decrypting…";err.textContent="";
+  try{const cfg=await(await fetch("crypto.json",{cache:"no-store"})).json();const key=await deriveKey(document.getElementById("gate-pw").value,cfg);
+    const raw=b64(await crypto.subtle.exportKey("raw",key));
+    await openWith(key);(document.getElementById("gate-remember").checked?LS:SS).set("pl.k",raw)}
+  catch(x){err.textContent=x&&x.name==="OperationError"?"That passphrase doesn't open this data.":("Could not load: "+(x.message||x));btn.disabled=false;btn.textContent="Unlock"}});
+tryStored();
+
+function start(D){
+"use strict";
+// ---------- utils ----------
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const fmtDate=(s,o={day:"numeric",month:"short",year:"numeric"})=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",o);
+const fmtDur=m=>{if(m==null)return"–";const h=Math.floor(m/60),mm=Math.round(m%60);return h?`${h}:${String(mm).padStart(2,"0")}`:`${mm}′`};
+const fmtPace=s=>s?`${Math.floor(s/60)}:${String(Math.round(s%60)).padStart(2,"0")}`:"–";
+const fmtTime=s=>{s=Math.round(s);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return(h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")};
+const sgn=v=>(v>0?"+":"")+v;
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const addDays=(s,n)=>{const d=new Date(s+"T12:00:00");d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const dayDiff=(a,b)=>Math.round((new Date(b+"T12:00:00")-new Date(a+"T12:00:00"))/864e5);
+const el=(t,a={},h="")=>{const e=document.createElement(t);for(const k in a)e.setAttribute(k,a[k]);e.innerHTML=h;return e};
+const days=D.days, N=days.d.length, LAST=N-1, ATH=D.athlete;
+const SPORT_COLOR={Run:"var(--s1)",Track:"var(--s7)",Treadmill:"var(--z4)",Bike:"var(--s2)","Indoor bike":"var(--s2)",Swim:"var(--s3)",Strength:"var(--ink-2)",Hike:"var(--muted)",Cardio:"var(--muted)",Surf:"var(--s3)",Other:"var(--muted)"};
+const isRun=a=>["Run","Track","Treadmill"].includes(a.sport);
+
+// ---------- chart engine (SVG, hover crosshair, sync groups) ----------
+const groups={};
+function chart(host,opt){
+  host.innerHTML="";
+  const W=Math.max(280,host.clientWidth), H=opt.h||220, m={t:12,r:12,b:24,l:opt.l||40};
+  const n=opt.x.length, iw=W-m.l-m.r, ih=H-m.t-m.b;
+  const xs=i=>m.l+(n<=1?iw/2:i*iw/(n-1));
+  let lo=Infinity,hi=-Infinity;
+  opt.series.forEach(s=>(s.lo||[]).forEach(v=>{if(v!=null)lo=Math.min(lo,v)}));
+  opt.series.forEach(s=>s.v.forEach((v,i)=>{if(v==null)return;const b=s.stackBase?s.stackBase[i]:0;if(s.type==="bar")lo=Math.min(lo,b);lo=Math.min(lo,v+b);hi=Math.max(hi,v+b)}));
+  (opt.bands||[]).forEach(b=>{if(b.clip)return;lo=Math.min(lo,b.y0);hi=Math.max(hi,b.y1)});
+  if(opt.y0!=null)lo=Math.min(lo,opt.y0); if(opt.yMin!=null)lo=opt.yMin; if(opt.yMax!=null)hi=opt.yMax;
+  if(!isFinite(lo)){lo=0;hi=1}
+  if(hi===lo){hi+=1;lo-=1}
+  const pad=(hi-lo)*.06; if(opt.yMin==null&&lo!==0)lo-=pad; if(opt.yMax==null)hi+=pad;
+  const inv=!!opt.invert;
+  const ys=v=>inv? m.t+(v-lo)/(hi-lo)*ih : m.t+ih-(v-lo)/(hi-lo)*ih;
+  const NS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); svg.setAttribute("height",H);
+  let g="";
+  // bands
+  (opt.bands||[]).forEach(b=>{const y0=clamp(b.y0,lo,hi),y1=clamp(b.y1,lo,hi);if(y1<=y0)return;const a=ys(inv?y0:y1),bb=ys(inv?y1:y0);
+    g+=`<rect x="${m.l}" y="${a}" width="${iw}" height="${bb-a}" fill="${b.fill||"var(--band)"}"/>`;
+    if(b.label)g+=`<text x="${m.l+iw-4}" y="${a+12}" text-anchor="end" style="fill:var(--muted);font-size:10px">${b.label}</text>`});
+  // grid
+  const tk=ticks(lo,hi,opt.yTicks||4); g+=`<g class="grid">`;
+  tk.forEach(t=>{g+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${ys(t)}" y2="${ys(t)}"/><text x="${m.l-6}" y="${ys(t)+3.5}" text-anchor="end">${(opt.yFmt||(v=>v))(t)}</text>`});
+  g+=`</g>`;
+  if(opt.zero&&lo<0&&hi>0)g+=`<line x1="${m.l}" x2="${m.l+iw}" y1="${ys(0)}" y2="${ys(0)}" stroke="var(--ink-2)" stroke-width="1"/>`;
+  // x labels
+  const xl=opt.xLabels||xlab(opt.x,iw);
+  xl.forEach(i=>{g+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle">${(opt.xFmt||(v=>v))(opt.x[i],i)}</text>`});
+  // series
+  const bw=Math.max(1,iw/n*(opt.barFill||.7));
+  opt.series.forEach(s=>{
+    if(s.type==="range"){let seg=[];const flush=()=>{if(seg.length>1)g+=`<path d="M${seg.map(q=>q[0]+","+q[1]).join("L")}L${seg.slice().reverse().map(q=>q[0]+","+q[2]).join("L")}Z" fill="${s.c}"/>`;seg=[]};
+      s.v.forEach((v,i)=>{const l=s.lo[i];if(v==null||l==null){flush();return}seg.push([xs(i).toFixed(1),ys(v).toFixed(1),ys(l).toFixed(1)])});flush();return}
+    if(s.type==="bar"){s.v.forEach((v,i)=>{if(v==null||v===0)return;const b=s.stackBase?s.stackBase[i]:0;const y1=ys(b+v),y0=ys(b);const top=Math.min(y1,y0),hh=Math.max(.5,Math.abs(y0-y1)-(s.stackBase?1:0));
+      const r=Math.min(bw/2,s.stackBase&&!s.top?0:2);g+=`<rect x="${xs(i)-bw/2}" y="${top}" width="${bw}" height="${hh}" rx="${r}" fill="${s.c}" opacity="${s.op||1}"/>`});}
+    else if(s.type==="dot"){s.v.forEach((v,i)=>{if(v==null)return;g+=`<circle cx="${xs(i)}" cy="${ys(v)}" r="${s.r||3.5}" fill="${s.c}" stroke="var(--surface)" stroke-width="1.5" opacity="${s.op||.9}"/>`});}
+    else{let d="",pen=false;s.v.forEach((v,i)=>{if(v==null){pen=false;return}d+=(pen?"L":"M")+xs(i).toFixed(1)+","+ys(v).toFixed(1);pen=true});
+      if(s.area){const base=ys(Math.max(lo,Math.min(0,hi)));let ad="";let seg=[];const flush=()=>{if(seg.length>1)ad+=`M${seg[0][0]},${base}`+seg.map(p=>`L${p[0]},${p[1]}`).join("")+`L${seg[seg.length-1][0]},${base}Z`;seg=[]};
+        s.v.forEach((v,i)=>{if(v==null){flush();return}seg.push([xs(i).toFixed(1),ys(v).toFixed(1)])});flush();g+=`<path d="${ad}" fill="${s.c}" opacity="${s.areaOp||.14}"/>`}
+      g+=`<path d="${d}" fill="none" stroke="${s.c}" stroke-width="${s.w||2}" stroke-linejoin="round" stroke-linecap="round" ${s.dash?`stroke-dasharray="${s.dash}"`:""} opacity="${s.op||1}"/>`}
+  });
+  (opt.marks||[]).forEach(mk=>{g+=`<line x1="${xs(mk.i)}" x2="${xs(mk.i)}" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink)" stroke-width="1" stroke-dasharray="3 3" opacity=".6"/>`;if(mk.label)g+=`<text x="${xs(mk.i)+4}" y="${m.t+10}" style="fill:var(--ink-2)">${mk.label}</text>`});
+  g+=`<line class="xh" x1="0" x2="0" y1="${m.t}" y2="${m.t+ih}" stroke="var(--ink)" stroke-width="1" opacity="0"/><g class="hd"></g>`;
+  svg.innerHTML=g; host.appendChild(svg);
+  const tip=el("div",{class:"tip"}); host.appendChild(tip);
+  const xh=svg.querySelector(".xh"), hd=svg.querySelector(".hd");
+  const show=(i,own)=>{if(i==null){xh.setAttribute("opacity",0);hd.innerHTML="";tip.style.display="none";return}
+    const x=xs(i);xh.setAttribute("x1",x);xh.setAttribute("x2",x);xh.setAttribute("opacity",.35);
+    let dots="",rows="";opt.series.forEach(s=>{const v=s.v[i];if(s.noTip)return;if(v!=null&&s.type!=="bar"){const b=s.stackBase?s.stackBase[i]:0;dots+=`<circle cx="${x}" cy="${ys(v+b)}" r="4" fill="${s.c}" stroke="var(--surface)" stroke-width="2"/>`}
+      if(s.name)rows+=`<div class="r"><span><i style="background:${s.c}"></i>${s.name}</span><b>${v==null?"–":(s.fmt||opt.tipFmt||(v=>Math.round(v*10)/10))(v)}</b></div>`});
+    hd.innerHTML=dots; if(!own){tip.style.display="none";return}
+    tip.innerHTML=`<div class="t">${(opt.tipTitle||opt.xFmt||(v=>v))(opt.x[i],i)}</div>${rows}${opt.tipExtra?opt.tipExtra(i):""}`;tip.style.display="block";
+    const r=host.getBoundingClientRect(),sc=r.width/W;let left=x*sc+14;if(left+tip.offsetWidth>r.width)left=x*sc-tip.offsetWidth-14;tip.style.left=Math.max(0,left)+"px";tip.style.top="4px"};
+  const pick=e=>{const r=svg.getBoundingClientRect();const px=(e.clientX-r.left)*W/r.width;return clamp(Math.round((px-m.l)/iw*(n-1)),0,n-1)};
+  const me={show};
+  if(opt.group){(groups[opt.group]=groups[opt.group]||[]).push(me)}
+  const bcast=(i,src)=>{(opt.group?groups[opt.group]:[me]).forEach(c=>c.show(i,c===src))};
+  svg.addEventListener("pointermove",e=>bcast(pick(e),me));
+  svg.addEventListener("pointerleave",()=>bcast(null,me));
+  if(opt.onClick)svg.addEventListener("click",e=>opt.onClick(pick(e)));
+  return me;
+}
+function ticks(lo,hi,n){const span=hi-lo,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0))),f=step0/mag,step=(f<1.5?1:f<3?2:f<7?5:10)*mag;const out=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-9;v+=step)out.push(+v.toFixed(6));return out}
+function xlab(x,iw){const n=x.length,k=Math.max(2,Math.floor(iw/90));const step=Math.max(1,Math.ceil(n/k));const out=[];for(let i=0;i<n;i+=step)out.push(i);return out}
+const mon=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{month:"short"})+(s.slice(5,7)==="01"?" "+s.slice(2,4):"");
+const shortD=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+function monthTicks(x){const o=[];x.forEach((d,i)=>{if(i===0||d.slice(0,7)!==x[i-1].slice(0,7))o.push(i)});if(o.length>8){return o.filter((_,k)=>k%Math.ceil(o.length/8)===0)}return o}
+
+// ---------- readiness model ----------
+function loadRaces(){const tags=PL.state.races||{};D.acts.forEach(a=>{const t=tags[a.id];a.isRace=t!=null?!!(typeof t==="object"?t.v:t):!!a.raceBase})}
+loadRaces();
+const CI=()=>PL.state.checkins||{};
+const W=D.well||{};
+const fmtAgo=iso=>{const h=(Date.now()-new Date(iso))/36e5;return h<1?Math.max(1,Math.round(h*60))+" min ago":h<48?Math.round(h)+" h ago":Math.round(h/24)+" days ago"};
+async function syncNow(msgEl){if(msgEl)msgEl.textContent="Saving…";try{const r=await pushState();if(msgEl)msgEl.textContent=r==="synced"?"Saved and synced to GitHub. The dashboard rebuilds in a few minutes.":"Saved on this device. Connect GitHub in Settings to sync across devices and into the model."}catch(e){if(msgEl)msgEl.textContent="Saved on this device; GitHub sync failed ("+e.message+"). It will retry next time."}}
+function wellbeing(c){if(!c)return null;const k=["sleep","fatigue","soreness","stress","mood","motivation","confidence"];const v=k.map(x=>c[x]).filter(x=>x!=null);return v.length?Math.round((v.reduce((a,b)=>a+b,0)/v.length-1)/6*100):null}
+function readiness(i){
+  const ctl=days.ctl[i],tsb=days.tsb[i],acwr=days.acwr[i],mono=days.mono[i];
+  const p=ctl>5?tsb/ctl*100:0;
+  const f=p>=5&&p<=25?100:p>25?Math.max(60,100-(p-25)*1.6):Math.max(0,100+(p-5)*2.2);
+  const a=acwr==null?80:acwr>=.8&&acwr<=1.3?100:acwr>1.3?Math.max(10,100-(acwr-1.3)*150):Math.max(55,100-(.8-acwr)*100);
+  const mn=mono==null||!isFinite(mono)?100:mono<=1.5?100:Math.max(20,100-(mono-1.5)*80);
+  const r2=((days.tss[i-1]||0)+(days.tss[i-2]||0))/2/Math.max(ctl,10);const rc=r2<=1.2?100:Math.max(30,100-(r2-1.2)*40);
+  const parts=[{k:"Form",s:f,w:.30},{k:"Load ratio",s:a,w:.15},{k:"Monotony",s:mn,w:.10},{k:"Recent load",s:rc,w:.10}];
+  const z=(W.hrv_z||[])[i];let hrv=null;if(z!=null){hrv=z>=-.5?100:Math.max(0,100+(z+.5)*45);parts.push({k:"HRV",s:hrv,w:.15})}
+  const rh=(W.rhr||[])[i],r30=(W.rhr30||[])[i];let rhr=null;if(rh!=null&&r30!=null){const d=rh-r30;rhr=d<=2?100:Math.max(0,100-(d-2)*12);parts.push({k:"Resting HR",s:rhr,w:.05})}
+  const sl=[i,i-1,i-2].map(j=>(W.sleep||[])[j]).filter(v=>v!=null);let slp=null;if(sl.length){const m=sl.reduce((x,y)=>x+y,0)/sl.length;slp=clamp((m-5)/3*100,0,100);parts.push({k:"Sleep",s:slp,w:.05})}
+  const wb=wellbeing(CI()[days.d[i]]);if(wb!=null)parts.push({k:"Check-in",s:wb,w:.10});
+  const sw=parts.reduce((t,x)=>t+x.w,0);const score=parts.reduce((t,x)=>t+x.s*x.w,0)/sw;
+  return {score:Math.round(score),p,f,a,mn,rc,parts,wb,hrv,rhr,slp,z};
+}
+const STATE=s=>s>=80?["Primed","var(--good)"]:s>=65?["Ready","var(--s1)"]:s>=50?["Manage","var(--warn)"]:["Recover","var(--crit)"];
+const READY=days.d.map((_,i)=>i<30?null:readiness(i).score);
+
+// ---------- views ----------
+function renderToday(){
+  const R=readiness(LAST),[st,col]=STATE(R.score);
+  $("#r-score").textContent=R.score;$("#r-state").textContent=st;$("#r-dot").style.background=col;
+  $("#r-date").textContent=(D.live&&days.d[LAST]===new Date().toISOString().slice(0,10)?"This morning · ":"Morning of ")+fmtDate(days.d[LAST],{weekday:"long",day:"numeric",month:"long",year:"numeric"});
+  const P=Math.max(0,LAST-1);const ctl=days.ctl[P],c28=days.ctl[Math.max(0,P-28)],tsb=days.tsb[LAST],atl=days.atl[P];
+  const dC=Math.round((ctl-c28)/c28*100);
+  const peak=Math.max(...days.ctl);
+  let call=`Form is <b>${sgn(Math.round(tsb))}</b> (${sgn(Math.round(R.p))}% of fitness): `;
+  call+=R.p>25?`you are fresh, but fitness has slipped <b>${Math.abs(dC)}%</b> in four weeks and sits ${Math.round((1-ctl/peak)*100)}% below your season high. `:R.p>=5?`this is the race window. `:R.p>-10?`you are absorbing normal training. `:`you are carrying meaningful fatigue. `;
+  call+=R.p>25?"Good day for quality work if the legs agree; extended freshness without load costs fitness.":R.p>=5?"Hold intensity, keep volume low, protect sleep.":R.p>-10?"Train as planned, quality sessions are fine.":"Prioritise recovery before the next key session.";
+  if(R.z!=null&&R.z<-.5)call+=` <b>HRV is below your normal range</b> (${R.z.toFixed(1)} SD): treat intensity as optional today.`;
+  if(R.wb==null)call+=` <span style="opacity:.6">No check-in yet today${R.z==null?" and no HRV, so this reading uses load only":""}.</span>`;
+  $("#r-call").innerHTML=call;
+  $("#r-meta").innerHTML=`<div><b class="num">${ctl.toFixed(1)}</b>Fitness · CTL</div><div><b class="num">${atl.toFixed(1)}</b>Fatigue · ATL</div><div><b class="num">${sgn(tsb.toFixed(1))}</b>Form · TSB</div><div><b class="num">${days.acwr[LAST]?.toFixed(2)??"–"}</b>Acute:chronic</div>`;
+  const tiles=[
+    {k:"Form",v:sgn(Math.round(R.p)),u:"% CTL",s:R.f,d:"Race window +5 to +25%. Below −30% signals accumulated fatigue."},
+    {k:"Load ratio",v:days.acwr[LAST]?.toFixed(2)??"–",u:"ACWR",s:R.a,d:"7-day vs 28-day load. 0.8 to 1.3 is the stable band."},
+    {k:"Monotony",v:days.mono[LAST]?days.mono[LAST].toFixed(2):"–",u:"7-day",s:R.mn,d:"Mean ÷ SD of daily load. Above 2 means too little variation."},
+    {k:"Recent load",v:Math.round(((days.tss[LAST-1]||0)+(days.tss[LAST-2]||0))),u:"TSS 48h",s:R.rc,d:"Last two days relative to your chronic load."}];
+  $("#r-tiles").innerHTML=tiles.map(t=>`<div class="tile"><div class="eyebrow">${t.k}</div><div class="v num">${t.v}<small>${t.u}</small></div><div class="meter"><i style="width:${Math.round(t.s)}%"></i></div><div class="d">${t.d}</div></div>`).join("");
+  // wellness tiles
+  const lastIdx=arr=>{for(let j=LAST;j>=Math.max(0,LAST-3);j--)if(arr&&arr[j]!=null)return j;return -1};
+  const hi=lastIdx(W.hrv7),ri=lastIdx(W.rhr),si=lastIdx(W.sleep),ck=CI()[days.d[LAST]];
+  const none=(k,how)=>`<div class="tile"><div class="eyebrow">${k}</div><div class="v num" style="color:var(--muted)">–</div><div class="d">${how}</div></div>`;
+  const wt=[];
+  wt.push(hi>=0?`<div class="tile"><div class="eyebrow">HRV · 7-day</div><div class="v num">${Math.round(W.hrv7[hi])}<small>ms</small></div><div class="meter"><i style="width:${Math.round(R.hrv??50)}%"></i></div><div class="d">${W.hrv_lo[hi]!=null?`Normal ${Math.round(W.hrv_lo[hi])}–${Math.round(W.hrv_hi[hi])} ms · ${R.z!=null?(R.z>=-.5?"within range":"<b>below range</b>"):""}`:"Building your 60-day baseline (needs 14+ days)."}</div></div>`:none("HRV","No overnight HRV in TrainingPeaks. Turn on Garmin health-data sync, or log rMSSD in Check-in."));
+  wt.push(ri>=0?`<div class="tile"><div class="eyebrow">Resting HR</div><div class="v num">${W.rhr[ri]}<small>bpm</small></div><div class="meter"><i style="width:${Math.round(R.rhr??50)}%"></i></div><div class="d">${W.rhr30[ri]!=null?`${sgn(Math.round(W.rhr[ri]-W.rhr30[ri]))} vs 30-day mean (${W.rhr30[ri]}). +5 or more flags strain or illness.`:"Building baseline."}</div></div>`:none("Resting HR","No resting HR synced yet."));
+  wt.push(si>=0?`<div class="tile"><div class="eyebrow">Sleep · 3-night</div><div class="v num">${([si,si-1,si-2].map(j=>W.sleep[j]).filter(v=>v!=null).reduce((a,b,_,A)=>a+b/A.length,0)).toFixed(1)}<small>h</small></div><div class="meter"><i style="width:${Math.round(R.slp??0)}%"></i></div><div class="d">Under 7 h for three nights blunts adaptation and mood.</div></div>`:none("Sleep","No sleep data synced yet."));
+  wt.push(ck?`<div class="tile"><div class="eyebrow">Check-in · today</div><div class="v num">${wellbeing(ck)}<small>/100</small></div><div class="meter"><i style="width:${wellbeing(ck)}%"></i></div><div class="d">${ck.note?"“"+ck.note.replace(/</g,"&lt;")+"”":"Motivation "+ck.motivation+"/7 · confidence "+ck.confidence+"/7"}</div></div>`:`<div class="tile"><div class="eyebrow">Check-in · today</div><div class="v num" style="color:var(--muted)">–</div><div class="d"><a href="#" id="go-ci">Do today's 60-second check-in →</a></div></div>`);
+  $("#w-tiles").innerHTML=wt.join("");const g=$("#go-ci");if(g)g.onclick=e=>{e.preventDefault();$('nav.tabs button[data-v="check"]').click()};
+  // banners
+  const bn=[];if(D.sync&&D.sync.time){const h=(Date.now()-new Date(D.sync.time))/36e5;if(h>36)bn.push(`<b>Last TrainingPeaks sync ${fmtAgo(D.sync.time)}.</b> The session cookie has probably expired. Open Settings for the two-minute fix.`)}
+  if(D.sync&&D.sync.pending>0)bn.push(`<b>Back-filling history:</b> ${D.sync.pending} older workouts still to download. They arrive over the next nightly runs.`);
+  if(PL.dirty)bn.push(`<b>Unsynced changes on this device.</b> Connect GitHub in Settings so check-ins reach the model.`);
+  $("#banners").innerHTML=bn.map(b=>`<div class="banner"><span>⚠︎</span><div>${b}</div></div>`).join("");
+  drawPMC();drawRecovery();
+}
+function drawRecovery(){
+  const has=(W.hrv||[]).some(v=>v!=null)||(W.rhr||[]).some(v=>v!=null);$("#rec-cards").style.display=has?"":"none";if(!has)return;
+  const a=pmcRange?Math.max(0,N-pmcRange):0,sl=v=>(v||[]).slice(a),x=sl(days.d),xl=monthTicks(x);
+  chart($("#c-hrv"),{x,h:220,xLabels:xl,xFmt:mon,tipTitle:d=>fmtDate(d),group:"pmc",series:[{name:"Normal range",type:"range",v:sl(W.hrv_hi),lo:sl(W.hrv_lo),c:"var(--band-2)",noTip:true},{name:"rMSSD",v:sl(W.hrv),type:"dot",r:2.5,c:"var(--s1)",fmt:v=>Math.round(v)+" ms"},{name:"7-day",v:sl(W.hrv7),c:"var(--ink)",w:2,fmt:v=>Math.round(v)+" ms"}],tipExtra:k=>{const lo=sl(W.hrv_lo)[k],hi=sl(W.hrv_hi)[k];return lo!=null?`<div class="r"><span>Normal</span><b>${Math.round(lo)}–${Math.round(hi)}</b></div>`:""}});
+  chart($("#c-rhr"),{x,h:220,xLabels:xl,xFmt:mon,tipTitle:d=>fmtDate(d),group:"pmc",series:[{name:"Resting HR",v:sl(W.rhr),type:"dot",r:2.5,c:"var(--s2)",fmt:v=>v+" bpm"},{name:"30-day mean",v:sl(W.rhr30),c:"var(--ink)",w:2,fmt:v=>v+" bpm"}]});
+}
+let pmcRange=182;
+function drawPMC(){
+  const a=pmcRange?Math.max(0,N-pmcRange):0, sl=v=>v.slice(a);
+  const x=sl(days.d);const xl=monthTicks(x);
+  const raceMarks=D.acts.filter(r=>r.isRace).map(r=>({i:days.d.indexOf(r.date)-a})).filter(m=>m.i>=0);
+  chart($("#c-pmc"),{x,h:260,xLabels:xl,xFmt:mon,tipTitle:d=>fmtDate(d,{weekday:"short",day:"numeric",month:"short",year:"numeric"}),group:"pmc",
+    series:[{name:"Daily load",v:sl(days.tss),type:"bar",c:"var(--line-2)",fmt:v=>Math.round(v)},{name:"Fitness",v:sl(days.ctl),c:"var(--s1)",w:2.5},{name:"Fatigue",v:sl(days.atl),c:"var(--s2)"}],
+    marks:raceMarks.map(m=>({...m,label:"Race"})),y0:0});
+  chart($("#c-tsb"),{x,h:200,xLabels:xl,xFmt:mon,group:"pmc",tipTitle:d=>fmtDate(d),zero:true,
+    bands:[{y0:5,y1:25,label:"Race window",fill:"var(--band-2)"},{y0:-60,y1:-30,label:"Heavy fatigue",fill:"var(--band)",clip:true}],
+    series:[{name:"Form",v:sl(days.tsb),c:"var(--ink)",area:true,areaOp:.08}]});
+  chart($("#c-ready"),{x,h:200,xLabels:xl,xFmt:mon,group:"pmc",tipTitle:d=>fmtDate(d),yMin:0,yMax:100,
+    bands:[{y0:80,y1:100,label:"Primed"},{y0:0,y1:50,label:"Recover"}],
+    series:[{name:"Readiness",v:sl(READY),c:"var(--s1)",fmt:v=>v}]});
+}
+
+// ---------- activities ----------
+let aFilter="All",aMonth="",aShown=60,aRaceOnly=false;
+function renderActs(){
+  const counts={};D.acts.forEach(a=>counts[a.sport]=(counts[a.sport]||0)+1);
+  const sports=["All",...Object.keys(counts).sort((a,b)=>counts[b]-counts[a])];
+  $("#a-filters").innerHTML=sports.map(s=>`<button class="chip ${s===aFilter?"on":""}" data-s="${s}">${s}<span class="c">${s==="All"?D.acts.length:counts[s]}</span></button>`).join("")+`<button class="chip ${aRaceOnly?"on":""}" data-race="1">Races only</button>`;
+  const months=[...new Set(D.acts.map(a=>a.date.slice(0,7)))].sort().reverse();
+  const ms=$("#a-month");if(!ms.options.length){ms.innerHTML=`<option value="">All months</option>`+months.map(m=>`<option value="${m}">${new Date(m+"-15").toLocaleDateString("en-GB",{month:"long",year:"numeric"})}</option>`).join("")}
+  let L=D.acts.filter(a=>(aFilter==="All"||a.sport===aFilter)&&(!aMonth||a.date.startsWith(aMonth))&&(!aRaceOnly||a.isRace)).sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time));
+  $("#a-count").textContent=`${L.length} sessions · ${(L.reduce((t,a)=>t+a.dur,0)/60).toFixed(0)} h · ${L.reduce((t,a)=>t+a.tss,0).toFixed(0)} TSS`;
+  const show=L.slice(0,aShown);$("#a-more").style.display=L.length>aShown?"":"none";
+  $("#a-table").innerHTML=`<thead><tr><th>Date</th><th>Session</th><th class="n">Time</th><th class="n">Dist</th><th class="n">Pace</th><th class="n">GAP</th><th class="n">Avg HR</th><th class="n">Ascent</th><th class="n">TSS</th><th class="n">RPE</th><th>Intensity</th></tr></thead><tbody>`+
+    show.map(a=>{const zt=a.zones?a.zones.reduce((s,v)=>s+v,0):0;
+      const zb=a.zones&&zt?`<div class="zbar" style="height:10px;width:120px">${a.zones.map((v,k)=>v>0?`<i style="flex:${v};background:var(--z${k+1})"></i>`:"").join("")}</div>`:`<span class="sub">–</span>`;
+      return `<tr class="click" data-id="${a.id}"><td class="mono">${fmtDate(a.date,{day:"2-digit",month:"short",year:"2-digit"})} <span class="sub">${a.time}</span></td><td><span class="sport"><i style="background:${SPORT_COLOR[a.sport]||"var(--muted)"}"></i>${a.sport}</span>${a.isRace?'<span class="racetag">RACE</span>':""}${a.test?'<span class="racetag" style="background:var(--s1)">TEST</span>':""}${a.title?`<div class="sub" style="max-width:260px;overflow:hidden;text-overflow:ellipsis">${a.title.replace(/</g,"&lt;")}</div>`:""}</td>
+      <td class="n">${fmtDur(a.dur)}</td><td class="n">${a.km?a.km.toFixed(2):"–"}</td><td class="n">${isRun(a)?fmtPace(a.pace):"–"}</td><td class="n">${isRun(a)?fmtPace(a.gap):"–"}</td><td class="n">${a.hr??"–"}</td><td class="n">${a.asc??"–"}</td><td class="n">${Math.round(a.tss)}${a.tss_src==="est"?"*":""}</td><td class="n">${a.rpe??"–"}</td><td>${zb}</td></tr>`}).join("")+`</tbody>`;
+}
+const ACT={};D.acts.forEach(a=>ACT[a.id]=a);
+function openAct(id){
+  const a=ACT[id];const P=$("#dpanel");groups.act=[];
+  const ztot=a.zones?a.zones.reduce((s,v)=>s+v,0):0;
+  const b=a.best||{};
+  const kv=[["Duration",fmtDur(a.dur)],["Distance",a.km?a.km.toFixed(2):"–","km"],isRun(a)?["Pace",fmtPace(a.pace),"/km"]:["Avg speed",a.km&&a.dur?(a.km/(a.dur/60)).toFixed(1):"–","km/h"],isRun(a)?["Grade-adj. pace",fmtPace(a.gap),"/km"]:null,["Avg HR",a.hr??"–","bpm"],["Max HR",a.hrmax??"–","bpm"],["Load",Math.round(a.tss),{tp:"TSS",hr:"hrTSS*",est:"TSS est."}[a.tss_src]||"TSS"],["Ascent",a.asc??"–","m"],a.ef?["Efficiency",a.ef.toFixed(2),"EF"]:null,a.decouple!=null?["Decoupling",sgn(a.decouple),"%"]:null,["Training effect",a.te!=null?`${a.te}/${a.tea}`:"–","aer/anaer"],["RPE · feel",a.rpe!=null?`${a.rpe} · ${["","Very weak","Weak","Normal","Strong","Very strong"][a.feel]||"–"}`:"–"],a.temp!=null?["Temp",a.temp,"°C"]:null].filter(Boolean);
+  P.innerHTML=`<button class="iconbtn close" id="dclose" aria-label="Close">✕</button>
+  <div class="eyebrow">${fmtDate(a.date,{weekday:"long",day:"numeric",month:"long",year:"numeric"})} · ${a.time}</div>
+  ${a.title?`<div style="font-size:15px;font-weight:600;margin-top:6px">${a.title.replace(/</g,"&lt;")}${a.event?` · ${a.event} (${a.priority})`:""}</div>`:a.event?`<div style="font-size:15px;font-weight:600;margin-top:6px">${a.event} (${a.priority})</div>`:""}
+  <h1 style="font-size:44px;font-weight:900;letter-spacing:-.04em;margin:6px 0 4px">${a.km?a.km.toFixed(2)+"<span style='font-size:20px;color:var(--muted);font-weight:700'> km</span> ":""}${a.sport}</h1>
+  <div style="display:flex;gap:10px;align-items:center;margin:8px 0 20px;flex-wrap:wrap"><label class="chip ${a.isRace?"on":""}" id="race-toggle" style="cursor:pointer">${a.isRace?"Tagged as race":"Tag as race / key performance"}</label>${a.steady?'<span class="status" style="--c:var(--s1)">Steady aerobic · counts towards EF</span>':""}</div>
+  <dl class="kv" style="margin:0">${kv.map(k=>`<div><dt>${k[0]}</dt><dd class="num">${k[1]}${k[2]?`<small>${k[2]}</small>`:""}</dd></div>`).join("")}</dl>
+  ${a.desc?`<div class="callout" style="margin-top:16px">${a.desc.replace(/</g,"&lt;")}</div>`:""}
+  ${a.zones&&ztot?`<div class="card" style="margin-top:16px"><div class="hd"><h3>Time in zone</h3><span class="sub">${fmtDur(ztot)} with HR</span></div><div class="zbar">${a.zones.map((v,k)=>v>0?`<i style="flex:${v};background:var(--z${k+1})" title="${ATH.znames[k]}: ${fmtDur(v)}"></i>`:"").join("")}</div>
+   <div class="legend" style="margin-top:10px">${a.zones.map((v,k)=>`<span><i class="sq" style="background:var(--z${k+1})"></i>${ATH.znames[k]} <b class="num" style="font-weight:500">${Math.round(v/ztot*100)}%</b></span>`).join("")}</div></div>`:""}
+  <div class="card" style="margin-top:16px"><div class="hd"><h3>Session trace</h3><span class="sub">Hover to inspect · traces share the time axis</span></div><div id="trace"></div></div>
+  ${Object.keys(b).some(k=>!k.startsWith("hr"))?`<div class="card" style="margin-top:16px"><div class="hd"><h3>Best efforts in this session</h3></div><table class="t"><thead><tr><th>Distance</th><th class="n">Time</th><th class="n">Pace</th><th class="n">Avg HR</th></tr></thead><tbody>${[1000,3000,5000,10000].filter(d=>b[d]).map(d=>`<tr><td>${d/1000} km</td><td class="n">${fmtTime(b[d])}</td><td class="n">${fmtPace(b[d]/(d/1000))}/km</td><td class="n">${b["hr"+d]??"–"}</td></tr>`).join("")}</tbody></table></div>`:""}`;
+  $("#drawer").classList.add("on");P.scrollTop=0;
+  $("#dclose").onclick=closeDrawer;
+  $("#race-toggle").onclick=()=>{PL.state.races[a.id]={v:!a.isRace,ts:Date.now()};loadRaces();openAct(id);renderActs();if($("#v-peak").classList.contains("on")){renderPeak();renderTaper()}syncNow(null).then(()=>{})};
+  const s=a.s;if(!s){$("#trace").innerHTML='<p class="note">No sample data recorded.</p>';return}
+  const T=$("#trace");const x=s.t;const xl=xlab(x,600).slice(0,7);const xf=v=>Math.round(v)+"′";const tt=v=>fmtDur(v)+" elapsed";
+  const add=(title,opt)=>{const w=el("div",{style:"margin-top:8px"});w.innerHTML=`<div class="eyebrow" style="margin-bottom:2px">${title}</div>`;const c=el("div",{class:"chart"});w.appendChild(c);T.appendChild(w);chart(c,{x,h:opt.h||150,xLabels:xl,xFmt:xf,tipTitle:tt,group:"act",...opt})};
+  if(s.hr)add("Heart rate · bpm",{series:[{name:"HR",v:s.hr,c:"var(--crit)",w:1.6,fmt:v=>v+" bpm"}],bands:ATH.zones.map((z,k)=>({y0:k?ATH.zones[k-1]:0,y1:z,fill:k%2?"var(--band)":"transparent",clip:true})).concat([{y0:ATH.zones[3],y1:250,fill:"var(--band-2)",label:"Z5",clip:true}])});
+  if(s.pace){const cap=v=>v==null||v>720?null:v;add("Pace · min/km (faster ↑)",{invert:true,yFmt:fmtPace,series:[{name:"Pace",v:s.pace.map(cap),c:"var(--s1)",w:1.6,fmt:v=>fmtPace(v)+"/km"},...(s.gapace?[{name:"GAP",v:s.gapace.map(cap),c:"var(--ink)",w:1,op:.55,fmt:v=>fmtPace(v)+"/km"}]:[])]})}
+  if(s.kph)add("Speed · km/h",{series:[{name:"Speed",v:s.kph,c:"var(--s2)",w:1.6}]});
+  if(s.alt)add("Elevation · m",{h:110,series:[{name:"Elevation",v:s.alt,c:"var(--muted)",w:1.4,area:true,areaOp:.2,fmt:v=>Math.round(v)+" m"}]});
+}
+function closeDrawer(){$("#drawer").classList.remove("on")}
+async function openSettings(){const P=$("#dpanel"),R=repoInfo(),tok=await getToken(),S=D.sync||{},st=PL.state.settings||{};
+  P.innerHTML=`<button class="iconbtn close" id="dclose" aria-label="Close">✕</button><div class="eyebrow">Settings</div><h1 style="font-size:36px;font-weight:900;letter-spacing:-.03em;margin:6px 0 18px">Sync &amp; data</h1>
+  <div class="kv"><div><dt>Last TrainingPeaks sync</dt><dd style="font-size:17px">${S.time?fmtAgo(S.time):"Offline export"}</dd></div><div><dt>Workouts</dt><dd class="num">${S.workouts??D.acts.length}</dd></div><div><dt>Downloaded this run</dt><dd class="num">${S.downloaded??"–"}</dd></div><div><dt>Still to back-fill</dt><dd class="num">${S.pending??0}</dd></div></div>
+  ${(S.warnings||[]).length?`<div class="callout" style="margin-top:12px"><b>Warnings from last sync:</b><br>${S.warnings.map(w=>w.replace(/</g,"&lt;")).join("<br>")}</div>`:""}
+  <div class="set-sec"><h3>If the sync stops</h3><p class="note">The TrainingPeaks session cookie lasts a few weeks. When it expires the nightly run fails and GitHub emails you. To fix it, log in at app.trainingpeaks.com, open DevTools (⌥⌘I) → Application → Cookies, copy <code>Production_tpAuth</code>, then paste it into your repository under Settings → Secrets and variables → Actions → <code>TP_AUTH_COOKIE</code>. Finally, re-run the <b>Sync</b> workflow from the Actions tab.</p></div>
+  <div class="set-sec"><h3>GitHub connection</h3><p class="note">Used only to save your encrypted check-ins and race tags to <code>state.enc</code>. Create a fine-grained token limited to this one repository with <b>Contents: Read and write</b>, and nothing else. It is stored on this device, encrypted with your passphrase.</p>
+   <div class="grid g2" style="margin-top:10px"><label class="f">Owner<input type="text" id="s-owner" value="${R?R.owner:""}"></label><label class="f">Repository<input type="text" id="s-repo" value="${R?R.repo:"performance-lab"}"></label></div>
+   <label class="f" style="margin-top:10px">Token ${tok?`<span class="status" style="--c:var(--good)">Connected</span>`:""}<input type="password" id="s-tok" placeholder="${tok?"•••••••• (leave blank to keep)":"github_pat_…"}"></label>
+   <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap"><button class="btn" id="s-save">Save connection</button>${tok?`<button class="btn ghost" id="s-forget">Remove token</button>`:""}</div><p class="note" id="s-msg" style="margin-top:8px"></p></div>
+  <div class="set-sec"><h3>Physiological anchors</h3><p class="note">Leave blank to use the values estimated from your data (currently max ${ATH.hrmax}, threshold ${ATH.lthr}, resting ${ATH.hrrest} bpm). Changes apply at the next build.</p>
+   <div class="grid g3" style="margin-top:10px"><label class="f">Max HR<input type="number" id="s-hrmax" value="${st.hrmax??""}"></label><label class="f">Threshold HR<input type="number" id="s-lthr" value="${st.lthr??""}"></label><label class="f">Resting HR<input type="number" id="s-hrrest" value="${st.hrrest??""}"></label></div>
+   <button class="btn ghost" id="s-anch" style="margin-top:12px">Save anchors</button></div>
+  <div class="set-sec"><h3>This device</h3><p class="note">Locking removes the remembered key and the cached check-ins from this browser.</p><button class="btn ghost" id="s-lock" style="margin-top:8px">Lock and forget this device</button></div>`;
+  $("#drawer").classList.add("on");$("#dclose").onclick=closeDrawer;
+  $("#s-save").onclick=async()=>{const o=$("#s-owner").value.trim(),r=$("#s-repo").value.trim(),t=$("#s-tok").value.trim();if(o&&r)LS.set("pl.repo",JSON.stringify({owner:o,repo:r}));
+    if(t)LS.set("pl.gh",await encEnv({t},PL.key));$("#s-msg").textContent="Testing…";try{const g=await ghGet();await syncNow($("#s-msg"))}catch(e){$("#s-msg").textContent="Could not reach the repository: "+e.message}};
+  if($("#s-forget"))$("#s-forget").onclick=()=>{LS.del("pl.gh");openSettings()};
+  $("#s-anch").onclick=()=>{const v=id=>{const x=$(id).value;return x===""?null:+x};PL.state.settings={hrmax:v("#s-hrmax"),lthr:v("#s-lthr"),hrrest:v("#s-hrrest")};PL.state.settings_ts=Date.now();syncNow($("#s-msg"))};
+  $("#s-lock").onclick=()=>{["pl.k","pl.gh","pl.state"].forEach(k=>LS.del(k));SS.del("pl.k");location.reload()};
+}
+
+// ---------- physiology ----------
+let volM="hrs";
+function renderPhys(){
+  const thrPace=(()=>{const r=D.acts.filter(a=>a.isRace&&a.best&&a.best[5000]).map(a=>a.best[5000]/5);return r.length?Math.min(...r):null})();
+  $("#p-anchors").innerHTML=[
+    ["Max HR",ATH.hrmax,"bpm","3rd-highest sustained 10-s peak across all sessions (strap spikes excluded)."],
+    ["Threshold HR",ATH.lthr,"bpm","2nd-best 20-min HR from runs ≥25 min. Confirm with a 30-min field test."],
+    ["Resting HR",ATH.hrrest,"bpm",{measured:"Median of your last 60 days of synced resting HR.",settings:"Set by you in Settings.",assumed:"Assumed until resting HR syncs from TrainingPeaks or Check-in."}[ATH.hrrest_src]||""],
+    ["Best 5 km",thrPace?fmtTime(thrPace*5):"–","","Fastest 5 km segment within a maximal effort. Raw time, not terrain-adjusted."]
+  ].map(t=>`<div class="tile"><div class="eyebrow">${t[0]}</div><div class="v num">${t[1]}<small>${t[2]}</small></div><div class="d">${t[3]}</div></div>`).join("");
+  const z=[0,...ATH.zones];
+  $("#p-zones").innerHTML=`<thead><tr><th>Zone</th><th class="n">From</th><th class="n">To</th><th class="n">% LTHR</th><th>Purpose</th><th class="n">Season hours</th></tr></thead><tbody>`+
+   ATH.znames.map((nm,k)=>{const hrs=D.acts.reduce((t,a)=>t+(a.zones?a.zones[k]:0),0)/60;return`<tr><td><span class="sport"><i style="background:var(--z${k+1})"></i>${nm}</span></td><td class="n">${k?z[k]:"–"}</td><td class="n">${k<4?z[k+1]-1:"max"}</td><td class="n">${["<85","85–89","90–94","95–99","≥100"][k]}</td><td class="sub">${["Recovery, warm-up","Aerobic base, durability","Tempo, marathon-ish","Threshold, 10k to HM effort","VO2max, 3–5k and faster"][k]}</td><td class="n">${hrs.toFixed(1)}</td></tr>`}).join("")+`</tbody>`;
+  // EF
+  const idx={};days.d.forEach((d,i)=>idx[d]=i);
+  const efv=new Array(N).fill(null);D.ef.d.forEach((d,k)=>efv[idx[d]]=D.ef.v[k]);
+  const roll=days.d.map((d,i)=>{const w=[];for(let j=Math.max(0,i-27);j<=i;j++)if(efv[j]!=null)w.push(efv[j]);return w.length>=3?w.reduce((a,b)=>a+b)/w.length:null});
+  chart($("#c-ef"),{x:days.d,h:240,xLabels:monthTicks(days.d),xFmt:mon,tipTitle:d=>fmtDate(d),yFmt:v=>v.toFixed(2),series:[{name:"Session EF",v:efv,type:"dot",c:"var(--s1)",fmt:v=>v.toFixed(3)},{name:"28-day mean",v:roll,c:"var(--ink)",w:2,fmt:v=>v.toFixed(3)}]});
+  // zones weekly
+  const W=D.weekly;let base=new Array(W.wk.length).fill(0);const zs=[];
+  W.zones.forEach((arr,k)=>{const v=arr.map(m=>m/60);zs.push({name:ATH.znames[k],v,type:"bar",c:`var(--z${k+1})`,stackBase:base.slice(),top:k===4,fmt:v=>v.toFixed(1)+" h"});base=base.map((b,i)=>b+v[i])});
+  $("#z-legend").innerHTML=ATH.znames.map((n,k)=>`<span><i class="sq" style="background:var(--z${k+1})"></i>${n.split(" ")[0]}</span>`).join("");
+  chart($("#c-zones"),{x:W.wk,h:220,xLabels:monthTicks(W.wk),xFmt:mon,tipTitle:d=>"Week of "+fmtDate(d),series:zs.reverse(),y0:0,barFill:.78});
+  drawVol();
+  // decoupling
+  const dec=D.acts.filter(a=>a.decouple!=null).sort((a,b)=>a.date.localeCompare(b.date));
+  chart($("#c-dec"),{x:dec.map(a=>a.date),h:200,xFmt:shortD,tipTitle:d=>fmtDate(d),zero:true,bands:[{y0:-5,y1:5,label:"<5% drift",fill:"var(--band-2)"}],series:[{name:"Decoupling",v:dec.map(a=>a.decouple),type:"dot",c:"var(--s1)",fmt:v=>sgn(v)+"%"}],onClick:i=>openAct(dec[i].id)});
+  // audit
+  const au=D.audit;const st=$("#p-audit-st");
+  if(au.valid==null||!au.bands.length){st.textContent="No RR data";st.style.setProperty("--c","var(--muted)");$("#p-audit").innerHTML=`<p class="note">No beat-to-beat (RR) data in your recent files. Record runs with a chest strap (Polar H10, Garmin HRM-Pro) and switch on HRV logging on the watch to unlock DFA α1 thresholds.</p>`;return}
+  if(au.valid){st.textContent="Usable";st.style.setProperty("--c","var(--good)")}else{st.textContent="Not usable";st.style.setProperty("--c","var(--crit)")}
+  if(au.valid){$("#p-audit").innerHTML=`<p class="note">RR data behave physiologically: DFA α1 falls with intensity across <b>${au.sessions}</b> sessions. HRV-threshold estimates are the next build step.</p><table class="t" style="margin-top:10px"><thead><tr><th>HR band</th><th class="n">Windows</th><th class="n">Median α1</th></tr></thead><tbody>${au.bands.map(b=>`<tr><td class="mono">${b[0]}–${b[0]+9}</td><td class="n">${b[1]}</td><td class="n">${b[2].toFixed(2)}</td></tr>`).join("")}</tbody></table>`;return}
+  $("#p-audit").innerHTML=`<p class="note">Beat-to-beat data exist in <b>${au.sessions}</b> sessions (${au.windows} two-minute windows). For a valid trace, DFA α1 should fall from about 1.0 at easy effort to under 0.5 near threshold. Here it <b>stays near ${au.bands[au.bands.length-1][2]} even at 180+ bpm</b>, which suggests the RR series were smoothed or derived rather than measured from a chest strap. HRV thresholds (HRVT1/AeT) and Kubios-style metrics are therefore withheld rather than reported wrongly.</p>
+  <table class="t" style="margin-top:10px"><thead><tr><th>HR band</th><th class="n">Windows</th><th class="n">Median α1</th><th class="n">Expected</th></tr></thead><tbody>${au.bands.map(b=>`<tr><td class="mono">${b[0]}–${b[0]+9}</td><td class="n">${b[1]}</td><td class="n">${b[2].toFixed(2)}</td><td class="n sub">${b[0]<130?"≈1.0+":b[0]<160?"0.75–1.0":b[0]<175?"0.5–0.75":"<0.5"}</td></tr>`).join("")}</tbody></table>
+  <p class="note" style="margin-top:10px"><b>Fix:</b> record runs with a Polar H10 or Garmin HRM-Pro, with HRV logging enabled. That unlocks DFA α1 thresholds and session-level HRV.</p>`;
+}
+function drawVol(){const W=D.weekly;const lab={hrs:["Hours",v=>v.toFixed(1)+" h"],km:["Run km",v=>v.toFixed(0)+" km"],asc:["Ascent",v=>Math.round(v)+" m"]}[volM];
+  chart($("#c-vol"),{x:W.wk,h:244,xLabels:monthTicks(W.wk),xFmt:mon,tipTitle:d=>"Week of "+fmtDate(d),y0:0,series:[{name:lab[0],v:W[volM],type:"bar",c:"var(--s1)",fmt:lab[1]}],barFill:.78})}
+
+// ---------- peaking & taper ----------
+let shape="exp";
+function baseline(){const p=new Array(7).fill(0),c=new Array(7).fill(0);for(let i=N-28;i<N;i++){const wd=new Date(days.d[i]+"T12:00:00").getDay();p[wd]+=days.tss[i];c[wd]++}return p.map((v,k)=>v/Math.max(1,c[k]))}
+function taperFactors(L,R,sh){const f=[];if(sh==="step")for(let i=1;i<=L;i++)f.push(1-R);
+  else if(sh==="linear")for(let i=1;i<=L;i++)f.push(Math.max(0,1-2*R*i/(L+1)));
+  else{let lo=.01,hi=200;for(let it=0;it<60;it++){const t=(lo+hi)/2;let s=0;for(let i=1;i<=L;i++)s+=Math.exp(-i/t);(s/L>1-R)?hi=t:lo=t}const t=(lo+hi)/2;for(let i=1;i<=L;i++)f.push(Math.exp(-i/t))}
+  return f}
+function simulate(race,L,R,sh,build){const usePl=$("#t-planned")&&$("#t-planned").checked;const PLN=D.planned||{};
+  const start=days.d[LAST];const H=dayDiff(start,race);if(H<1)return null;
+  const B=baseline();const f=taperFactors(L,R,sh);
+  let ctl=days.ctl[LAST],atl=days.atl[LAST];const out={d:[],ctl:[],atl:[],tsb:[],tss:[]};
+  for(let k=1;k<=H;k++){const d=addDays(start,k);const wd=new Date(d+"T12:00:00").getDay();const tIdx=k-(H-L);
+    const inT=tIdx>=1&&tIdx<=L;const load=d===race?0:(!inT&&usePl&&PLN[d]!=null)?PLN[d]:B[wd]*(build/100)*(inT?f[tIdx-1]:1);
+    out.d.push(d);out.tsb.push(ctl-atl);ctl+=(load-ctl)/42;atl+=(load-atl)/7;out.ctl.push(ctl);out.atl.push(atl);out.tss.push(load)}
+  const rd=out.d.length-1;const tsb=out.tsb[rd],ctlR=out.ctl[rd-1]??ctl;
+  return {...out,H,ctlR,tsbR:tsb,pct:tsb/ctlR*100,ctlPeak:Math.max(...out.ctl),f}
+}
+function renderTaper(){
+  const race=$("#t-date").value,L=+$("#t-len").value,R=+$("#t-red").value/100,build=+$("#t-build").value;
+  $("#t-len-v").textContent=L;$("#t-red-v").textContent=Math.round(R*100);$("#t-build-v").textContent=build;
+  const S=simulate(race,L,R,shape,build);if(!S){$("#t-kv").innerHTML='<p class="note">Pick a date after the last data day.</p>';return}
+  const lo=+$("#t-lo").value,hi=+$("#t-hi").value;
+  const ctlLoss=(S.ctlR-S.ctlPeak)/S.ctlPeak*100;
+  const inBand=S.pct>=lo&&S.pct<=hi;
+  $("#t-kv").innerHTML=[["Race-day form",sgn(S.tsbR.toFixed(1)),"TSB"],["Form % CTL",sgn(Math.round(S.pct)),"%"],["Race-day fitness",S.ctlR.toFixed(1),"CTL"],["Fitness lost",ctlLoss.toFixed(1),"%"]].map(k=>`<div><dt>${k[0]}</dt><dd class="num">${k[1]}<small>${k[2]}</small></dd></div>`).join("");
+  const past=days.d.slice(-42),xp=[...past,...S.d];const pad=a=>[...new Array(past.length).fill(null),...a];
+  const tStart=xp.length-1-L;
+  chart($("#c-taper"),{x:xp,h:250,xLabels:monthTicks(xp).length>2?monthTicks(xp):xlab(xp,500),xFmt:shortD,tipTitle:d=>fmtDate(d),group:"taper",zero:true,
+    bands:[{y0:S.ctlR*lo/100,y1:S.ctlR*hi/100,label:"Target form",fill:"var(--band-2)",clip:true}],
+    marks:[{i:past.length-1,label:"Data ends"},{i:tStart,label:"Taper"},{i:xp.length-1,label:"Race"}],
+    series:[{name:"Planned load",v:pad(S.tss),type:"bar",c:"var(--line-2)",fmt:v=>Math.round(v)},
+      {name:"Fitness",v:[...days.ctl.slice(-42),...new Array(S.d.length).fill(null)],c:"var(--s1)",w:2.5},{name:"Fitness (proj.)",v:pad(S.ctl).map((v,i)=>i===past.length-1?days.ctl[LAST]:v),c:"var(--s1)",dash:"5 4",w:2.5,noTip:false},
+      {name:"Fatigue",v:[...days.atl.slice(-42),...new Array(S.d.length).fill(null)],c:"var(--s2)"},{name:"Fatigue (proj.)",v:pad(S.atl).map((v,i)=>i===past.length-1?days.atl[LAST]:v),c:"var(--s2)",dash:"5 4"},
+      {name:"Form",v:[...days.tsb.slice(-42),...S.tsb],c:"var(--ink)",w:1.5}]});
+  const ev=L>=8&&L<=14&&R>=.41&&R<=.6&&shape!=="step";
+  $("#t-check").innerHTML=`<div class="grid g2" style="gap:10px">
+    <div class="callout"><span class="status" style="--c:${inBand?"var(--good)":"var(--warn)"}">${inBand?"On target":"Off target"}</span><br>Race-day form ${sgn(Math.round(S.pct))}% of CTL vs your ${lo} to ${hi}% target.</div>
+    <div class="callout"><span class="status" style="--c:${ev?"var(--good)":"var(--warn)"}">${ev?"Evidence-aligned":"Outside evidence band"}</span><br>Meta-analytic sweet spot: 8 to 14 days, 41 to 60% progressive volume cut, intensity and frequency held (Bosquet et al., 2007).</div></div>
+    <p class="note" style="margin-top:10px">Load is cut by volume. Keep 1 to 2 short race-pace sessions in the taper; this model sees only load, not the intensity that preserves sharpness.</p>`;
+}
+function optimise(){
+  const race=$("#t-date").value,build=+$("#t-build").value,lo=+$("#t-lo").value,hi=+$("#t-hi").value,mid=(lo+hi)/2;let best=null;
+  for(const sh of["exp","linear","step"])for(let L=7;L<=21;L++)for(let R=.2;R<=.75;R+=.05){const S=simulate(race,L,R,sh,build);if(!S)continue;
+    const miss=S.pct<lo?lo-S.pct:S.pct>hi?S.pct-hi:0;const evPen=(L<8||L>14?4:0)+(R<.41||R>.6?4:0)+(sh==="step"?3:0);
+    const score=miss*10+evPen-S.ctlR*0.8+Math.abs(S.pct-mid)*.15;if(!best||score<best.s)best={s:score,L,R,sh}}
+  if(!best)return;$("#t-len").value=best.L;$("#t-red").value=Math.round(best.R*100);shape=best.sh;$$("#t-shape button").forEach(b=>b.classList.toggle("on",b.dataset.s===shape));renderTaper()}
+
+function renderPeak(){
+  const idx={};days.d.forEach((d,i)=>idx[d]=i);
+  const R=D.acts.filter(a=>a.isRace).map(a=>{const i=idx[a.date];const b=a.best||{};const D_=b[5000]?5000:b[3000]?3000:b[1000]?1000:null;const t=D_?b[D_]:null;
+    const pre7=days.tss.slice(i-7,i).reduce((s,v)=>s+v,0)/7, base=days.tss.slice(i-35,i-7).reduce((s,v)=>s+v,0)/28;
+    return {a,i,dist:D_,t,eq:t?Math.round(t*Math.pow(5000/D_,1.06)):null,ctl:days.ctl[i],atl:days.atl[i],tsb:days.tsb[i],pct:days.tsb[i]/days.ctl[i]*100,taper:base>0?(pre7/base-1)*100:null}}).sort((x,y)=>x.a.date.localeCompare(y.a.date));
+  $("#race-table").innerHTML=`<thead><tr><th>Date</th><th class="n">Effort</th><th class="n">5k-equiv.</th><th class="n">CTL</th><th class="n">TSB</th><th class="n">TSB %</th><th class="n">Last 7d vs prior 4wk</th></tr></thead><tbody>`+
+    (R.length?R.map(r=>`<tr class="click" data-id="${r.a.id}"><td class="mono">${fmtDate(r.a.date,{day:"2-digit",month:"short",year:"2-digit"})}${r.a.event?`<div class="sub" style="font-family:var(--sans)">${r.a.event} · ${r.a.priority}</div>`:""}</td><td class="n">${r.dist?`${r.dist/1000}k ${fmtTime(r.t)}`:"–"}</td><td class="n"><b>${r.eq?fmtTime(r.eq):"–"}</b></td><td class="n">${r.ctl.toFixed(1)}</td><td class="n">${sgn(r.tsb.toFixed(1))}</td><td class="n">${sgn(Math.round(r.pct))}%</td><td class="n">${r.taper==null?"–":sgn(Math.round(r.taper))+"%"}</td></tr>`).join(""):`<tr><td colspan="7" class="sub">No races tagged.</td></tr>`)+`</tbody>`;
+  const pts=R.filter(r=>r.eq).sort((a,b)=>a.pct-b.pct);
+  chart($("#c-race"),{x:pts.map(r=>Math.round(r.pct)),h:220,xFmt:v=>sgn(v)+"%",xLabels:pts.map((_,i)=>i),invert:true,yFmt:v=>fmtTime(v),tipTitle:(v,i)=>fmtDate(pts[i].a.date)+" · form "+sgn(v)+"%",
+    series:[{name:"5k-equivalent",v:pts.map(r=>r.eq),type:"dot",r:6,c:"var(--s1)",fmt:fmtTime}],onClick:i=>pts[i]&&openAct(pts[i].a.id)});
+  $("#c-race").insertAdjacentHTML("beforeend",`<p class="note" style="margin-top:8px">Faster is higher. X axis: form on the day. ${pts.length} points cannot support a model yet; tag every race and time trial so this becomes your personal taper curve.</p>`);
+  // model card
+  const M=D.model;const srcTxt=M.source==="tests"?`${M.n} standardised tests`:`${M.n} steady-run efficiency readings`;
+  const head={personal:["Personalised model active","var(--good)",`Fitted to your ${srcTxt}. The fitness/fatigue time constants below are yours.`],
+    not_identifiable:["Not identifiable yet","var(--warn)",`Fitted to ${srcTxt}, but the fit does not beat simpler explanations, so it is not used.`],
+    insufficient:["Collecting data","var(--muted)",`Not enough performance markers yet (${M.n}).`]}[M.status]||["–","var(--muted)",""];
+  const tiles=M.status==="insufficient"?"":`<div class="grid g4" style="margin-bottom:14px">
+    <div class="tile"><div class="eyebrow">Variance explained</div><div class="v num">${(M.r2*100).toFixed(1)}<small>% R²</small></div><div class="d">Banister fitness-fatigue fit</div></div>
+    <div class="tile"><div class="eyebrow">Linear trend alone</div><div class="v num">${(M.r2_trend*100).toFixed(1)}<small>% R²</small></div><div class="d">The model must clearly beat this</div></div>
+    <div class="tile"><div class="eyebrow">Hold-out error</div><div class="v num">${M.mae_oos.toFixed(3)}<small>MAE</small></div><div class="d">vs ${M.mae_naive.toFixed(3)} for guessing the mean</div></div>
+    <div class="tile"><div class="eyebrow">Time constants</div><div class="v num">${M.tau1}/${M.tau2}<small>days</small></div><div class="d">${M.status==="personal"?`A hard day turns net-positive after ~${Math.round(M.t_neg)} d and peaks at ~${Math.round(M.t_peak)} d`:M.boundary?"On the search boundary: no real signal":"Fitness / fatigue decay"}</div></div></div>`;
+  $("#m-card").innerHTML=`<div class="hd"><div><div class="eyebrow">Personalised peaking model</div><h3 style="font-size:18px">${head[2]}</h3></div><span class="status" style="--c:${head[1]}">${head[0]}</span></div>${tiles}
+  <div class="grid g2" style="gap:16px"><div><div class="eyebrow" style="margin-bottom:6px">Standardised tests logged</div><div class="meter" style="height:8px"><i style="width:${Math.min(100,M.n_tests/20*100)}%"></i></div><p class="note" style="margin-top:6px"><b class="num">${M.n_tests}/20</b>. From 20 tests the model switches from efficiency readings to your tests.</p></div>
+  <div class="callout"><b>Test protocol:</b> every second week, same flat loop or treadmill, 15 min easy then 3 km steady at a fixed effort, chest strap on. Put <code>#test</code> in the TrainingPeaks title. Tag races with <code>#race</code> or add them as A/B/C events.</div></div>
+  ${M.status!=="personal"?`<p class="note" style="margin-top:12px">Until then the taper simulator uses the standard 42/7-day load model and the meta-analytic taper evidence, not a claim about your individual response.</p>`:""}`;
+}
+
+// ---------- check-in ----------
+const CIK=[["sleep","Sleep quality","Restless → deeply restored"],["fatigue","Energy","Exhausted → full of energy"],["soreness","Body","Very sore → fresh legs"],["stress","Stress","Overwhelmed → calm"],["mood","Mood","Low → great"],["motivation","Motivation to train","None → can't wait"],["confidence","Confidence for the next key session","Doubtful → certain"]];
+function renderCheck(){
+  const today=new Date().toISOString().slice(0,10);const di=$("#ci-date");if(!di.value)di.value=today;
+  const c=CI()[di.value]||{};
+  $("#ci-rows").innerHTML=CIK.map(([k,n,h])=>`<div class="ci-row"><div class="nm">${n}<small>${h}</small></div><input type="range" min="1" max="7" step="1" value="${c[k]??4}" data-k="${k}" aria-label="${n}"><div class="val num" id="cv-${k}">${c[k]??4}</div></div>`).join("");
+  $$("#ci-rows input").forEach(i=>i.oninput=()=>$("#cv-"+i.dataset.k).textContent=i.value);
+  $("#ci-sleep").value=c.sleep_h??"";$("#ci-hrv").value=c.hrv??"";$("#ci-rhr").value=c.rhr??"";$("#ci-note").value=c.note??"";
+  const all=CI();const ks=Object.keys(all).sort();const last=ks.slice(-28);
+  const wb=last.map(k=>wellbeing(all[k]));const mc=last.map(k=>all[k].motivation&&all[k].confidence?Math.round(((all[k].motivation+all[k].confidence)/2-1)/6*100):null);
+  const avg=a=>{const v=a.filter(x=>x!=null);return v.length?Math.round(v.reduce((s,x)=>s+x,0)/v.length):null};
+  const w7=avg(wb.slice(-7)),w28=avg(wb);
+  $("#ci-tiles").innerHTML=`<div class="tile"><div class="eyebrow">Wellbeing · 7-day</div><div class="v num">${w7??"–"}<small>/100</small></div><div class="d">${w28!=null&&w7!=null?`${sgn(w7-w28)} vs 28-day mean`:"Log a few days to see trends"}</div></div><div class="tile"><div class="eyebrow">Check-ins logged</div><div class="v num">${ks.length}</div><div class="d">${ks.length?"Last: "+fmtDate(ks[ks.length-1]):"Start today"}</div></div>`;
+  if(last.length>=2)chart($("#c-ci"),{x:last,h:200,xFmt:shortD,tipTitle:d=>fmtDate(d)+(all[d].note?`<br><span style="font-family:var(--sans)">“${all[d].note.replace(/</g,"&lt;")}”</span>`:""),yMin:0,yMax:100,series:[{name:"Wellbeing",v:wb,c:"var(--s1)",fmt:v=>v},{name:"Drive",v:mc,c:"var(--s7)",fmt:v=>v}]});
+  else $("#c-ci").innerHTML='<p class="note">Your trend appears after two check-ins.</p>';
+}
+function saveCI(){const d=$("#ci-date").value;const c={ts:Date.now()};$$("#ci-rows input").forEach(i=>c[i.dataset.k]=+i.value);
+  const num=s=>s===""?null:+s;c.sleep_h=num($("#ci-sleep").value);c.hrv=num($("#ci-hrv").value);c.rhr=num($("#ci-rhr").value);c.note=$("#ci-note").value.trim()||null;
+  PL.state.checkins[d]=c;renderCheck();syncNow($("#ci-msg"))}
+function exportCI(){const all=CI();const cols=["date",...CIK.map(x=>x[0]),"sleep_h","hrv","rhr","note"];const rows=[cols.join(",")].concat(Object.keys(all).sort().map(d=>[d,...cols.slice(1).map(k=>{const v=all[d][k];return v==null?"":typeof v==="string"?`"${v.replace(/"/g,'""')}"`:v})].join(",")));
+  const a=el("a",{href:URL.createObjectURL(new Blob([rows.join("\n")],{type:"text/csv"})),download:"checkins.csv"});document.body.appendChild(a);a.click();a.remove()}
+function importCI(f){const r=new FileReader();r.onload=()=>{try{let obj={};const t=r.result;if(f.name.endsWith(".json"))obj=JSON.parse(t);else{const L=t.trim().split(/\r?\n/);const h=L[0].split(",");L.slice(1).forEach(line=>{const cells=line.match(/("([^"]|"")*"|[^,]*)(,|$)/g).map(c=>c.replace(/,$/,"").replace(/^"|"$/g,"").replace(/""/g,'"'));const o={};h.slice(1).forEach((k,j)=>{const v=cells[j+1];o[k]=v===""||v==null?null:k==="note"?v:+v});obj[cells[0]]=o})}
+  for(const[d,c]of Object.entries(obj))PL.state.checkins[d]={...c,ts:Date.now()};renderCheck();syncNow($("#ci-msg"))}catch(e){$("#ci-msg").textContent="Could not read that file."}};r.readAsText(f)}
+
+// ---------- wiring ----------
+function boot(){
+  $("#asof").textContent=D.sync&&D.sync.time?"Synced "+fmtAgo(D.sync.time):"Data to "+fmtDate(D.range[1]);$("#gear").onclick=openSettings;
+  $("#foot").innerHTML=`<p><b style="color:var(--ink)">Method.</b> Load = TrainingPeaks TSS where TrainingPeaks has one; otherwise Banister TRIMP normalised so 1 h at LTHR = 100 (*estimated from duration where there is no HR). Fitness/fatigue = 42/7-day exponentially weighted load; form = yesterday's fitness minus fatigue. Grade-adjusted pace uses the Minetti (2002) energy-cost polynomial. Readiness weighting (form 30%, load ratio 15%, monotony 10%, recent load 10%, HRV 15%, resting HR 5%, sleep 5%, check-in 10%; renormalised over the signals present) is provisional and will be recalibrated against your logged outcomes. Data: ${D.acts.length} sessions, ${fmtDate(D.range[0])} to ${fmtDate(D.range[1])}.</p>`;
+  $$("nav.tabs button").forEach(b=>b.onclick=()=>{$$("nav.tabs button").forEach(x=>x.setAttribute("aria-selected",x===b));$$("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+b.dataset.v));store.set("pl.tab",b.dataset.v);redraw()});
+  $$("#pmc-range button").forEach(b=>b.onclick=()=>{pmcRange=+b.dataset.r;$$("#pmc-range button").forEach(x=>x.classList.toggle("on",x===b));groups.pmc=[];drawPMC();drawRecovery()});
+  $$("#vol-m button").forEach(b=>b.onclick=()=>{volM=b.dataset.m;$$("#vol-m button").forEach(x=>x.classList.toggle("on",x===b));drawVol()});
+  $("#a-filters").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.race){aRaceOnly=!aRaceOnly}else aFilter=b.dataset.s;aShown=60;renderActs()};
+  $("#a-month").onchange=e=>{aMonth=e.target.value;aShown=60;renderActs()};
+  $("#a-more").onclick=()=>{aShown+=60;renderActs()};
+  document.addEventListener("click",e=>{const tr=e.target.closest("tr.click");if(tr)openAct(tr.dataset.id)});
+  $("#drawer .scrim").onclick=closeDrawer;document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDrawer()});
+  const up=(D.upcoming||[]).filter(e=>e.date>days.d[LAST]);const pick=up.find(e=>e.priority==="A")||up.find(e=>e.priority==="B")||up[0];
+  $("#t-date").value=pick?pick.date:addDays(days.d[LAST],28);$("#t-from").textContent="from "+fmtDate(days.d[LAST]);
+  $("#t-events").innerHTML=up.slice(0,6).map(e=>`<button class="chip ${pick&&e.date===pick.date?"on":""}" data-d="${e.date}">${e.priority} · ${e.name.replace(/</g,"&lt;")} <span class="c">${shortD(e.date)}</span></button>`).join("")||`<span class="sub">Add races to your TrainingPeaks calendar (A/B/C) and they appear here.</span>`;
+  $("#t-events").onclick=e=>{const b=e.target.closest("button");if(!b)return;$("#t-date").value=b.dataset.d;$$("#t-events button").forEach(x=>x.classList.toggle("on",x===b));groups.taper=[];renderTaper()};
+  $("#t-planned").onchange=()=>{groups.taper=[];renderTaper()};if(!Object.keys(D.planned||{}).length)$("#t-planned").closest("label").style.display="none";
+  ["#t-date","#t-len","#t-red","#t-build","#t-lo","#t-hi"].forEach(s=>$(s).oninput=()=>{groups.taper=[];renderTaper()});
+  $$("#t-shape button").forEach(b=>b.onclick=()=>{shape=b.dataset.s;$$("#t-shape button").forEach(x=>x.classList.toggle("on",x===b));groups.taper=[];renderTaper()});
+  $("#t-opt").onclick=()=>{groups.taper=[];optimise()};
+  $("#ci-save").onclick=saveCI;$("#ci-export").onclick=exportCI;$("#ci-import").onchange=e=>e.target.files[0]&&importCI(e.target.files[0]);$("#ci-date").onchange=renderCheck;
+  $("#theme").onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches;r.dataset.theme=dark?"light":"dark";store.set("pl.theme",r.dataset.theme);redraw()};
+  const th=store.get("pl.theme",null);if(th)document.documentElement.dataset.theme=th;
+  const tab=store.get("pl.tab","today");const tb=$(`nav.tabs button[data-v="${tab}"]`);if(tb)tb.click();else redraw();
+  let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(redraw,150)});
+}
+function redraw(){for(const k in groups)groups[k]=[];
+  const v=$("section.view.on").id;
+  if(v==="v-today")renderToday();else if(v==="v-acts")renderActs();else if(v==="v-phys")renderPhys();else if(v==="v-peak"){renderPeak();renderTaper()}else renderCheck()}
+boot();
+}
+</script>
+</body>
+</html>

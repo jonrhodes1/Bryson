@@ -1,0 +1,9 @@
+# Never commit plaintext health data or credentials
+sync/cache/
+_site/
+*.json.gz
+*.fit
+*.FIT
+*.gz
+.env
+__pycache__/
