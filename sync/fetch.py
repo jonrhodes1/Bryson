@@ -69,16 +69,28 @@ async def fetch(cache: Path, start: dt.date, today: dt.date, ahead_days: int = 1
         athlete_override.set(athlete)
 
     async with TPClient() as client:
+        # Step 1: is the cookie accepted at all?
+        user = await client._get_user_data()
+        if not user:
+            raise SyncAuthError("COOKIE REJECTED: TrainingPeaks would not return the account profile. "
+                                "Re-copy the full Production_tpAuth cookie value (logged in as the coach) into the "
+                                "TP_AUTH_COOKIE secret. Do not include the cookie name or quotes.")
+        roster = [a for a in (user.get("athletes") or []) if isinstance(a, dict)]
+        # Step 2: does TP_ATHLETE match someone on this account?
         try:
             aid = await client.ensure_athlete_id()
         except ValueError as e:  # ambiguous athlete name on a coach account
-            raise SyncAuthError(f"{e} Set the TP_ATHLETE repository variable to the athlete ID instead.")
+            raise SyncAuthError(f"ATHLETE AMBIGUOUS: {e} Set the TP_ATHLETE variable to the athlete ID.")
         if not aid:
-            raise SyncAuthError("Could not resolve the TrainingPeaks athlete. The cookie may be missing or expired, "
-                                "or TP_ATHLETE does not match an athlete on this account.")
-        user = await client._get_user_data() or {}
+            # initials + IDs only, so the (publicly viewable) log does not carry full names
+            ids = ", ".join(f"{(a.get('firstName') or '?')[:1]}.{(a.get('lastName') or '?')[:1]}.={a.get('athleteId')}"
+                            for a in roster[:40]) or "none"
+            raise SyncAuthError(f"ATHLETE NOT FOUND: cookie works, but TP_ATHLETE='{athlete}' matched none of the "
+                                f"{len(roster)} athletes on this account ({ids}). Set the TP_ATHLETE repository "
+                                "variable to the right athlete ID.")
+        who = next((a for a in roster if a.get("athleteId") == aid), user)
         (cache / "profile.json").write_text(json.dumps({"athlete_id": aid,
-                                                         "name": " ".join(x for x in [user.get("firstName"), user.get("lastName")] if x) if not athlete else athlete}))
+                                                         "name": " ".join(x for x in [who.get("firstName"), who.get("lastName")] if x)}))
 
         # ---- workouts (completed + planned), full window every run so edits/deletions propagate
         end = today + dt.timedelta(days=ahead_days)

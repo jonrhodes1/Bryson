@@ -57,6 +57,7 @@ def main():
         try:
             summary = fetch.run(cache, start, today)
         except fetch.SyncAuthError as e:
+            print(f"::error title=TrainingPeaks sync failed::{e}")   # shows on the run page, not just in the log
             sys.exit(f"AUTH: {e}")
         print("fetch:", json.dumps(summary))
         items, planned, metrics, events, profile = engine.items_from_cache(cache, today)
