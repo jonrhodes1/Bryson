@@ -385,6 +385,7 @@ def build(items, planned, metrics, events, profile, state, today: dt.date, sync_
     for k in ("hrv", "rhr", "sleep", "weight"):
         if k not in met:
             met[k] = np.nan
+    met = met.apply(pd.to_numeric, errors="coerce").astype(float)   # empty metrics arrive as object dtype
     ln = np.log(met.hrv.where(met.hrv > 0))
     ln7 = ln.rolling(7, min_periods=3).mean()
     base = ln.shift(1).rolling(60, min_periods=14).mean(); sd = ln.shift(1).rolling(60, min_periods=14).std()
