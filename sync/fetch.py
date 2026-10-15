@@ -69,7 +69,20 @@ async def fetch(cache: Path, start: dt.date, today: dt.date, ahead_days: int = 1
         athlete_override.set(athlete)
 
     async with TPClient() as client:
-        # Step 1: is the cookie accepted at all?
+        # Step 1: is the cookie accepted at all? Report TrainingPeaks' own answer (never the cookie itself).
+        tok = await client._ensure_access_token()
+        if not tok.success:
+            code = tok.error_code.value if tok.error_code else "?"
+            if "No credential" in (tok.message or ""):
+                why = "the TP_AUTH_COOKIE secret is empty or not passed to the workflow"
+            elif code == "AUTH_EXPIRED":
+                why = "TrainingPeaks says the cookie is invalid or expired (HTTP 401)"
+            elif "Token exchange failed" in (tok.message or ""):
+                why = f"TrainingPeaks refused the request ({tok.message}); a 403 here usually means it blocks GitHub's servers"
+            else:
+                why = f"{code}: {tok.message}"
+            raise SyncAuthError(f"COOKIE REJECTED: {why}. Cookie length seen: {len(os.environ.get('TP_AUTH_COOKIE', ''))} "
+                                "characters. Re-copy the full Production_tpAuth value (logged in as the coach).")
         user = await client._get_user_data()
         if not user:
             raise SyncAuthError("COOKIE REJECTED: TrainingPeaks would not return the account profile. "

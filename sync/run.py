@@ -32,6 +32,7 @@ def main():
 
     pw = os.environ.get("DASH_PASSPHRASE")
     if not pw or len(pw) < 16:
+        print("::error title=Passphrase::DASH_PASSPHRASE secret missing or shorter than 16 characters.")
         sys.exit("DASH_PASSPHRASE secret missing or shorter than 16 characters. Use 4+ random words.")
     cfg = json.loads((ROOT / "site" / "crypto.json").read_text())
     key = crypto.derive_key(pw, cfg["salt"], cfg["iter"])
@@ -52,6 +53,13 @@ def main():
         if args.today is None:
             today = max(dt.date.fromisoformat(str(i["fit"]["session"].get("start_time", "1970-01-01"))[:10]) for i in items if i["fit"].get("session"))
     else:
+        # Forgive common paste mistakes in the cookie secret: whitespace, quotes, or the "Production_tpAuth=" prefix.
+        ck = os.environ.get("TP_AUTH_COOKIE", "").strip().strip('"').strip("'").strip()
+        if ck.lower().startswith("production_tpauth="):
+            ck = ck.split("=", 1)[1].strip()
+        ck = ck.split(";")[0].strip()
+        if ck:
+            os.environ["TP_AUTH_COOKIE"] = ck
         import fetch
         start = dt.date.fromisoformat(os.environ["TP_START"]) if os.environ.get("TP_START") else today - dt.timedelta(days=730)
         try:
